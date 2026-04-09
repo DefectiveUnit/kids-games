@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Zone!</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lilita+One&family=Quicksand:wght@500;700&display=swap');
+
+  :root {
+    --pop-pink: #ff6b9d;
+    --sunny-yellow: #ffd93d;
+    --sky-blue: #6ec6ff;
+    --mint-green: #4ecdc4;
+    --soft-purple: #c490e4;
+    --warm-orange: #ff9a56;
+    --card-radius: 28px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Quicksand', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background: #fef9f0;
+    position: relative;
+  }
+
+  /* --- floating background shapes --- */
+  body::before, body::after {
+    content: '';
+    position: fixed;
+    border-radius: 50%;
+    z-index: 0;
+    opacity: .12;
+    pointer-events: none;
+  }
+  body::before {
+    width: 420px; height: 420px;
+    background: var(--pop-pink);
+    top: -120px; left: -80px;
+    animation: blobFloat 14s ease-in-out infinite alternate;
+  }
+  body::after {
+    width: 350px; height: 350px;
+    background: var(--sky-blue);
+    bottom: -80px; right: -60px;
+    animation: blobFloat 11s ease-in-out infinite alternate-reverse;
+  }
+
+  @keyframes blobFloat {
+    0%   { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(40px, 30px) scale(1.08); }
+  }
+
+  /* --- decorative dots --- */
+  .dots {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .dot {
+    position: absolute;
+    border-radius: 50%;
+    opacity: .18;
+    animation: drift linear infinite;
+  }
+  @keyframes drift {
+    0%   { transform: translateY(0) rotate(0deg); }
+    100% { transform: translateY(-110vh) rotate(360deg); }
+  }
+
+  /* --- main wrapper --- */
+  .page {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 24px 64px;
+    min-height: 100vh;
+  }
+
+  /* --- header --- */
+  .title {
+    font-family: 'Lilita One', cursive;
+    font-size: clamp(2.6rem, 8vw, 4.6rem);
+    text-align: center;
+    line-height: 1.15;
+    margin-bottom: 8px;
+    animation: popIn .6s cubic-bezier(.17,.67,.29,1.3) both;
+  }
+  .title .word1 { color: var(--pop-pink); }
+  .title .word2 { color: var(--sunny-yellow); text-shadow: 1px 1px 0 #e6b800; }
+  .title .word3 { color: var(--sky-blue); }
+
+  .subtitle {
+    font-size: clamp(1rem, 3vw, 1.3rem);
+    font-weight: 700;
+    color: #b0a090;
+    text-align: center;
+    margin-bottom: 48px;
+    animation: popIn .6s .15s cubic-bezier(.17,.67,.29,1.3) both;
+  }
+
+  @keyframes popIn {
+    0%   { opacity: 0; transform: scale(.6) translateY(20px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  /* --- card grid --- */
+  .games {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 32px;
+    width: 100%;
+    max-width: 720px;
+  }
+
+  /* --- game card --- */
+  .card {
+    position: relative;
+    background: #fff;
+    border-radius: var(--card-radius);
+    padding: 40px 32px 36px;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    box-shadow:
+      0 4px 0 var(--accent),
+      0 8px 24px rgba(0,0,0,.08);
+    transition: transform .25s cubic-bezier(.17,.67,.29,1.3), box-shadow .25s ease;
+    animation: cardIn .5s cubic-bezier(.17,.67,.29,1.3) both;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .card:nth-child(1) { --accent: var(--soft-purple); animation-delay: .25s; }
+  .card:nth-child(2) { --accent: var(--mint-green);   animation-delay: .38s; }
+  .card:nth-child(3) { --accent: var(--warm-orange);  animation-delay: .51s; }
+  .card:nth-child(4) { --accent: var(--sky-blue);     animation-delay: .64s; }
+
+  @keyframes cardIn {
+    0%   { opacity: 0; transform: translateY(40px) scale(.9); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .card:hover {
+    transform: translateY(-6px) scale(1.03);
+    box-shadow:
+      0 8px 0 var(--accent),
+      0 16px 40px rgba(0,0,0,.12);
+  }
+  .card:active {
+    transform: translateY(-2px) scale(.98);
+    box-shadow:
+      0 2px 0 var(--accent),
+      0 4px 12px rgba(0,0,0,.10);
+  }
+
+  /* accent stripe at top */
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 6px;
+    background: var(--accent);
+    border-radius: var(--card-radius) var(--card-radius) 0 0;
+  }
+
+  .card-icon {
+    font-size: 64px;
+    line-height: 1;
+    margin-bottom: 16px;
+    animation: wiggle 2.5s ease-in-out infinite;
+    animation-delay: inherit;
+  }
+  .card:nth-child(2) .card-icon { animation-delay: .4s; }
+
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    20%      { transform: rotate(-8deg); }
+    40%      { transform: rotate(8deg); }
+    60%      { transform: rotate(-4deg); }
+    80%      { transform: rotate(4deg); }
+  }
+
+  .card-title {
+    font-family: 'Lilita One', cursive;
+    font-size: 1.55rem;
+    color: #3a3a3a;
+    margin-bottom: 8px;
+  }
+
+  .card-desc {
+    font-size: .95rem;
+    font-weight: 500;
+    color: #999;
+    line-height: 1.5;
+  }
+
+  .card-badge {
+    display: inline-block;
+    margin-top: 16px;
+    padding: 6px 20px;
+    border-radius: 40px;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 700;
+    font-size: .85rem;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(0,0,0,.1);
+  }
+
+  /* --- footer --- */
+  .footer {
+    margin-top: auto;
+    padding-top: 48px;
+    font-size: .8rem;
+    color: #ccc;
+    animation: popIn .6s .55s both;
+  }
+
+  /* --- responsive --- */
+  @media (max-width: 600px) {
+    .page { padding: 32px 16px 48px; }
+    .games { gap: 24px; }
+    .card { padding: 32px 24px 28px; }
+    .card-icon { font-size: 52px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- floating dots -->
+<div class="dots" id="dots"></div>
+
+<div class="page">
+  <h1 class="title">
+    <span class="word1">Game</span>
+    <span class="word2">Zone</span>
+    <span class="word3">!</span>
+  </h1>
+  <p class="subtitle">Pick a game and let's play</p>
+
+  <div class="games">
+    <a class="card" href="memory-game/index.html">
+      <div class="card-icon">👸</div>
+      <div class="card-title">Princess Memory Match</div>
+      <p class="card-desc">Flip cards and find matching Disney princesses!</p>
+      <span class="card-badge">Play</span>
+    </a>
+    <a class="card" href="typing-game/index.html">
+      <div class="card-icon">⌨️</div>
+      <div class="card-title">Typing Game</div>
+      <p class="card-desc">Learn to type words with pictures and sounds!</p>
+      <span class="card-badge">Play</span>
+    </a>
+  </div>
+
+  <div class="footer">Made with ♥ for awesome kids</div>
+</div>
+
+<script>
+  // generate gentle floating dots
+  const palette = ['#ff6b9d','#ffd93d','#6ec6ff','#4ecdc4','#c490e4','#ff9a56'];
+  const container = document.getElementById('dots');
+  for (let i = 0; i < 18; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    const size = 8 + Math.random() * 18;
+    d.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%;
+      top:${100 + Math.random()*20}%;
+      background:${palette[i % palette.length]};
+      animation-duration:${10 + Math.random()*14}s;
+      animation-delay:${-Math.random()*14}s;
+    `;
+    container.appendChild(d);
+  }
+</script>
+</body>
+</html>

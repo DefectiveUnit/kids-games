@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cp -r C:/code/claude-testing/memory-game C:/code/kids-games/memory-game)",
+      "Bash(cp -r C:/code/typing-game C:/code/kids-games/typing-game)",
+      "Bash(rm -rf C:/code/kids-games/typing-game/.git)"
+    ]
+  }
+}

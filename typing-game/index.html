@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Typing Game</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #f0f4ff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    user-select: none;
+  }
+
+  h1 {
+    margin-top: 12px;
+    font-size: 1.4rem;
+    color: #555;
+  }
+
+  /* ---------- picture ---------- */
+  #picture {
+    font-size: 120px;
+    margin: 10px 0;
+    line-height: 1.2;
+  }
+
+  #picture img {
+    height: 140px;
+    border-radius: 16px;
+  }
+
+  /* ---------- word display ---------- */
+  #word {
+    display: flex;
+    gap: 12px;
+    margin: 10px 0 18px;
+  }
+
+  .letter {
+    font-size: 72px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 12px;
+    transition: all 0.2s;
+    color: #aaa;
+  }
+
+  .letter.active {
+    color: #2563eb;
+    background: #dbeafe;
+    transform: scale(1.15);
+  }
+
+  .letter.done {
+    color: #16a34a;
+  }
+
+  /* ---------- celebration ---------- */
+  #celebration {
+    font-size: 48px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ---------- keyboard ---------- */
+  #keyboard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .kb-row {
+    display: flex;
+    gap: 6px;
+  }
+
+  .key {
+    width: 52px;
+    height: 52px;
+    border-radius: 8px;
+    background: #fff;
+    border: 2px solid #cbd5e1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 600;
+    color: #334155;
+    transition: all 0.15s;
+  }
+
+  .key.highlight {
+    background: #2563eb;
+    color: #fff;
+    border-color: #1d4ed8;
+    transform: scale(1.18);
+    box-shadow: 0 0 16px rgba(37, 99, 235, 0.5);
+  }
+
+  .key.pressed {
+    background: #16a34a;
+    color: #fff;
+    border-color: #15803d;
+    transform: scale(0.95);
+  }
+
+  /* ---------- countdown ---------- */
+  #countdown {
+    margin-top: 18px;
+    font-size: 24px;
+    font-weight: 700;
+    color: #64748b;
+    height: 40px;
+  }
+
+  #secret-btns {
+    position: fixed;
+    bottom: 10px;
+    right: 10px;
+    display: flex;
+    gap: 4px;
+  }
+
+  .secret-btn {
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: 0.25;
+    font-size: 14px;
+    line-height: 1;
+  }
+
+  .secret-btn:hover { opacity: 0.5; }
+</style>
+</head>
+<body>
+
+<h1>Type the word!</h1>
+<div id="picture"></div>
+<div id="word"></div>
+<div id="celebration"></div>
+<div id="keyboard"></div>
+<div id="countdown"></div>
+<div id="secret-btns">
+  <button class="secret-btn" onclick="forceName('willow')">W</button>
+  <button class="secret-btn" onclick="forceName('jordan')">J</button>
+  <button class="secret-btn" onclick="forceName('james')">D</button>
+  <button class="secret-btn" onclick="forceName('susan')">M</button>
+</div>
+
+<script>
+const WORDS = [
+  { word: "cat",    emoji: "\u{1F431}" },
+  { word: "dog",    emoji: "\u{1F436}" },
+  { word: "sun",    emoji: "\u{2600}\u{FE0F}" },
+  { word: "fish",   emoji: "\u{1F41F}" },
+  { word: "star",   emoji: "\u{2B50}" },
+  { word: "moon",   emoji: "\u{1F319}" },
+  { word: "tree",   emoji: "\u{1F333}" },
+  { word: "bird",   emoji: "\u{1F426}" },
+  { word: "frog",   emoji: "\u{1F438}" },
+  { word: "bear",   emoji: "\u{1F43B}" },
+  { word: "duck",   emoji: "\u{1F986}" },
+  { word: "pig",    emoji: "\u{1F437}" },
+  { word: "cow",    emoji: "\u{1F42E}" },
+  { word: "bee",    emoji: "\u{1F41D}" },
+  { word: "hat",    emoji: "\u{1F3A9}" },
+  { word: "bus",    emoji: "\u{1F68C}" },
+  { word: "cup",    emoji: "\u{2615}" },
+  { word: "ball",   emoji: "\u{26BD}" },
+  { word: "cake",   emoji: "\u{1F370}" },
+  { word: "apple",  emoji: "\u{1F34E}" },
+  { word: "house",  emoji: "\u{1F3E0}" },
+  { word: "boat",   emoji: "\u{26F5}" },
+  { word: "rain",   emoji: "\u{1F327}\u{FE0F}" },
+  { word: "book",   emoji: "\u{1F4D6}" },
+  { word: "heart",  emoji: "\u{2764}\u{FE0F}" },
+  { word: "willow", image: "Images/Willow.jpeg" },
+  { word: "jordan", image: "Images/Jordan.jpeg" },
+  { word: "james",  emoji: "\u{1F468}" },
+  { word: "susan",  emoji: "\u{1F469}" },
+];
+
+const KB_ROWS = [
+  ["Q","W","E","R","T","Y","U","I","O","P"],
+  ["A","S","D","F","G","H","J","K","L"],
+  ["Z","X","C","V","B","N","M"],
+];
+
+let currentIndex = 0;  // index into current word
+let currentWordObj = null;
+let usedIndices = [];
+
+/* ---- speech ---- */
+function sayLetter(ch) {
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(ch.toUpperCase());
+  u.rate = 1.2;
+  u.pitch = 1.1;
+  speechSynthesis.speak(u);
+}
+
+function sayWord(word) {
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(word);
+  u.rate = 0.9;
+  u.pitch = 1.1;
+  speechSynthesis.speak(u);
+}
+
+/* ---- keyboard rendering ---- */
+const keyEls = {};
+
+function buildKeyboard() {
+  const kb = document.getElementById("keyboard");
+  kb.innerHTML = "";
+  KB_ROWS.forEach(row => {
+    const rowDiv = document.createElement("div");
+    rowDiv.className = "kb-row";
+    row.forEach(k => {
+      const key = document.createElement("div");
+      key.className = "key";
+      key.textContent = k;
+      key.id = "key-" + k;
+      keyEls[k] = key;
+      rowDiv.appendChild(key);
+    });
+    kb.appendChild(rowDiv);
+  });
+}
+
+function highlightKey(ch) {
+  Object.values(keyEls).forEach(el => el.classList.remove("highlight", "pressed"));
+  const k = ch.toUpperCase();
+  if (keyEls[k]) keyEls[k].classList.add("highlight");
+}
+
+function pressKey(ch) {
+  const k = ch.toUpperCase();
+  if (keyEls[k]) {
+    keyEls[k].classList.remove("highlight");
+    keyEls[k].classList.add("pressed");
+    setTimeout(() => keyEls[k].classList.remove("pressed"), 300);
+  }
+}
+
+/* ---- word rendering ---- */
+function renderWord() {
+  const container = document.getElementById("word");
+  container.innerHTML = "";
+  const letters = currentWordObj.word.split("");
+  letters.forEach((ch, i) => {
+    const span = document.createElement("span");
+    span.className = "letter";
+    span.textContent = ch;
+    if (i < currentIndex) span.classList.add("done");
+    if (i === currentIndex) span.classList.add("active");
+    container.appendChild(span);
+  });
+
+  const picEl = document.getElementById("picture");
+  if (currentWordObj.image) {
+    picEl.innerHTML = '<img src="' + currentWordObj.image + '" alt="' + currentWordObj.word + '">';
+  } else {
+    picEl.textContent = currentWordObj.emoji;
+  }
+
+  if (currentIndex < letters.length) {
+    highlightKey(letters[currentIndex]);
+  }
+}
+
+/* ---- pick a word ---- */
+function pickWord() {
+  if (usedIndices.length >= WORDS.length) usedIndices = [];
+  let idx;
+  do { idx = Math.floor(Math.random() * WORDS.length); }
+  while (usedIndices.includes(idx));
+  usedIndices.push(idx);
+  return WORDS[idx];
+}
+
+/* ---- auto advance ---- */
+let advanceTimer = null;
+let countdownInterval = null;
+
+function autoAdvance(seconds) {
+  const el = document.getElementById("countdown");
+  let remaining = seconds;
+  el.textContent = "Next word in " + remaining + "...";
+  countdownInterval = setInterval(() => {
+    remaining--;
+    if (remaining > 0) {
+      el.textContent = "Next word in " + remaining + "...";
+    } else {
+      clearInterval(countdownInterval);
+      el.textContent = "";
+    }
+  }, 1000);
+  advanceTimer = setTimeout(() => nextWord(), seconds * 1000);
+}
+
+function clearAutoAdvance() {
+  clearTimeout(advanceTimer);
+  clearInterval(countdownInterval);
+  document.getElementById("countdown").textContent = "";
+}
+
+/* ---- force name ---- */
+let forceQueue = [];
+
+function forceName(name) {
+  clearAutoAdvance();
+  const idx = WORDS.findIndex(w => w.word === name);
+  if (idx === -1) return;
+  forceQueue = [];
+  document.getElementById("celebration").textContent = "";
+  currentWordObj = WORDS[idx];
+  currentIndex = 0;
+  renderWord();
+}
+
+/* ---- start / next ---- */
+function nextWord() {
+  clearAutoAdvance();
+  document.getElementById("celebration").textContent = "";
+  if (forceQueue.length > 0) {
+    currentWordObj = WORDS[forceQueue.shift()];
+  } else {
+    currentWordObj = pickWord();
+  }
+  currentIndex = 0;
+  renderWord();
+}
+
+/* ---- input handling ---- */
+document.addEventListener("keydown", (e) => {
+  if (!currentWordObj) return;
+  const word = currentWordObj.word;
+  if (currentIndex >= word.length) return;
+
+  const expected = word[currentIndex].toLowerCase();
+  const typed = e.key.toLowerCase();
+
+  if (typed.length !== 1 || typed < 'a' || typed > 'z') return;
+
+  if (typed === expected) {
+    pressKey(typed);
+    sayLetter(typed);
+    currentIndex++;
+    renderWord();
+
+    if (currentIndex >= word.length) {
+      // finished the word
+      Object.values(keyEls).forEach(el => el.classList.remove("highlight"));
+      setTimeout(() => {
+        document.getElementById("celebration").textContent = "\u{1F389} Great job! \u{1F389}";
+        sayWord(word);
+        autoAdvance(3);
+      }, 250);
+    }
+  }
+});
+
+/* ---- init ---- */
+buildKeyboard();
+nextWord();
+</script>
+</body>
+</html>

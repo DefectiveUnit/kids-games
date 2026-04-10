@@ -98,6 +98,8 @@
     font-weight: 600;
     color: #334155;
     transition: all 0.15s;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
   }
 
   .key.highlight {
@@ -144,6 +146,29 @@
   }
 
   .secret-btn:hover { opacity: 0.5; }
+
+  /* ---------- mobile ---------- */
+  @media (max-width: 600px) {
+    #picture { font-size: 80px; margin: 6px 0; }
+    #picture img { height: 100px; }
+
+    .letter { font-size: 44px; padding: 2px 8px; border-radius: 8px; }
+    #word { gap: 6px; margin: 6px 0 10px; }
+
+    #celebration { font-size: 32px; height: 44px; }
+
+    .kb-row { gap: 4px; }
+    #keyboard { gap: 4px; margin-top: 6px; }
+    .key {
+      width: calc((100vw - 60px) / 10);
+      height: 48px;
+      font-size: 18px;
+      border-radius: 6px;
+    }
+
+    h1 { font-size: 1.1rem; margin-top: 8px; }
+    #countdown { font-size: 18px; margin-top: 10px; }
+  }
 </style>
 </head>
 <body>
@@ -235,6 +260,10 @@ function buildKeyboard() {
       key.className = "key";
       key.textContent = k;
       key.id = "key-" + k;
+      key.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        handleInput(k.toLowerCase());
+      });
       keyEls[k] = key;
       rowDiv.appendChild(key);
     });
@@ -347,32 +376,33 @@ function nextWord() {
 }
 
 /* ---- input handling ---- */
-document.addEventListener("keydown", (e) => {
+function handleInput(typed) {
   if (!currentWordObj) return;
   const word = currentWordObj.word;
   if (currentIndex >= word.length) return;
 
   const expected = word[currentIndex].toLowerCase();
-  const typed = e.key.toLowerCase();
+  if (typed !== expected) return;
 
-  if (typed.length !== 1 || typed < 'a' || typed > 'z') return;
+  pressKey(typed);
+  sayLetter(typed);
+  currentIndex++;
+  renderWord();
 
-  if (typed === expected) {
-    pressKey(typed);
-    sayLetter(typed);
-    currentIndex++;
-    renderWord();
-
-    if (currentIndex >= word.length) {
-      // finished the word
-      Object.values(keyEls).forEach(el => el.classList.remove("highlight"));
-      setTimeout(() => {
-        document.getElementById("celebration").textContent = "\u{1F389} Great job! \u{1F389}";
-        sayWord(word);
-        autoAdvance(3);
-      }, 250);
-    }
+  if (currentIndex >= word.length) {
+    Object.values(keyEls).forEach(el => el.classList.remove("highlight"));
+    setTimeout(() => {
+      document.getElementById("celebration").textContent = "\u{1F389} Great job! \u{1F389}";
+      sayWord(word);
+      autoAdvance(3);
+    }, 250);
   }
+}
+
+document.addEventListener("keydown", (e) => {
+  const typed = e.key.toLowerCase();
+  if (typed.length !== 1 || typed < 'a' || typed > 'z') return;
+  handleInput(typed);
 });
 
 /* ---- init ---- */

@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fruit Sums</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lilita+One&family=Quicksand:wght@500;700&display=swap');
+
+  :root { --ink: #3a3a3a; }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Quicksand', sans-serif;
+    min-height: 100vh;
+    background: #fef9f0;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 16px 32px;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  /* --- top bar --- */
+  .topbar {
+    width: 100%;
+    max-width: 1100px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .home {
+    font-family: 'Lilita One', cursive;
+    text-decoration: none;
+    color: #fff;
+    background: #c490e4;
+    padding: 8px 18px;
+    border-radius: 40px;
+    box-shadow: 0 3px 0 #9b6bbd;
+    font-size: 1.05rem;
+    white-space: nowrap;
+  }
+  .levels { display: flex; gap: 8px; }
+  .level-btn {
+    font-family: 'Lilita One', cursive;
+    font-size: 1.05rem;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 40px;
+    background: #fff;
+    color: #999;
+    box-shadow: 0 3px 0 #e2d8c8;
+    cursor: pointer;
+  }
+  .level-btn.active { background: #4ecdc4; color: #fff; box-shadow: 0 3px 0 #33a39b; }
+
+  .stars {
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+    min-width: 5.5em;
+    text-align: right;
+  }
+  .stars .empty { filter: grayscale(1); opacity: .25; }
+
+  /* --- prompt --- */
+  .prompt {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 80px;
+    margin-bottom: 16px;
+  }
+  .prompt-text {
+    font-family: 'Lilita One', cursive;
+    font-size: clamp(1.6rem, 4.4vw, 2.8rem);
+    text-align: center;
+    line-height: 1.1;
+  }
+  .prompt-text .small {
+    display: block;
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1rem, 2.4vw, 1.3rem);
+    color: #b0a090;
+  }
+  .pop { display: inline-block; animation: popIn .5s cubic-bezier(.17,.67,.29,1.3) both; }
+  .speak-btn {
+    font-size: 2rem;
+    width: 64px; height: 64px;
+    flex: none;
+    border-radius: 50%;
+    border: none;
+    background: #ffd93d;
+    box-shadow: 0 4px 0 #e6b800;
+    cursor: pointer;
+  }
+  .speak-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #e6b800; }
+
+  @keyframes popIn {
+    0%   { opacity: 0; transform: scale(.5); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  /* --- the sum --- */
+  .sum {
+    width: 100%;
+    max-width: 1100px;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: clamp(4px, 1.5vw, 18px);
+    container-type: inline-size;
+  }
+  .card {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 300px;
+    container-type: inline-size;
+    background: #fff;
+    border-radius: 28px;
+    padding: 14px 10px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 5px 0 var(--accent, #e2d8c8), 0 8px 24px rgba(0,0,0,.08);
+  }
+  .card.a { --accent: #ff9a56; }
+  .card.b { --accent: #6ec6ff; }
+  .card.ans { --accent: #7bd35a; }
+  .card.ans.solved { background: #f1fbe9; }
+
+  .num {
+    font-family: 'Lilita One', cursive;
+    font-size: clamp(2.2rem, 38cqi, 6rem);
+    line-height: 1;
+    color: var(--accent);
+    text-shadow: 3px 3px 0 rgba(0,0,0,.08);
+  }
+  .card.ans .num { color: #b0a090; }
+  .card.ans.solved .num { color: #57a83a; }
+
+  .op {
+    align-self: center;
+    font-family: 'Lilita One', cursive;
+    font-size: clamp(2.4rem, 7cqw, 4.8rem);
+    color: #b0a090;
+  }
+
+  .fruits {
+    display: grid;
+    grid-template-columns: repeat(var(--cols, 5), auto);
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    font-size: clamp(.9rem, 15cqi, 3rem);
+    line-height: 1.1;
+    min-height: 1.2em;
+  }
+  .fruit {
+    position: relative;
+    cursor: pointer;
+    text-align: center;
+    transition: transform .15s ease;
+  }
+  .fruit.hop { animation: hop .45s cubic-bezier(.17,.67,.29,1.3); }
+  @keyframes hop {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-25%) scale(1.2); }
+  }
+  .fruit.glow { filter: drop-shadow(0 0 6px #ffd93d) drop-shadow(0 0 10px #ffd93d); }
+  .fruit.in { animation: popIn .35s cubic-bezier(.17,.67,.29,1.3) both; }
+  .badge {
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translate(-50%, -55%);
+    min-width: 1.6em;
+    height: 1.6em;
+    padding: 0 .25em;
+    border-radius: 1em;
+    background: #ff6b9d;
+    color: #fff;
+    font-family: 'Lilita One', cursive;
+    font-size: .38em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 0 #d94a7c;
+    pointer-events: none;
+  }
+
+  /* --- answer buttons --- */
+  .numbers {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 24px;
+    max-width: 960px;
+  }
+  .num-btn {
+    font-family: 'Lilita One', cursive;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    width: clamp(56px, 8vw, 80px);
+    height: clamp(56px, 8vw, 80px);
+    border: none;
+    border-radius: 20px;
+    background: #fff;
+    color: var(--ink);
+    box-shadow: 0 5px 0 #e2d8c8, 0 6px 16px rgba(0,0,0,.06);
+    cursor: pointer;
+  }
+  .num-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #e2d8c8; }
+  .num-btn.right { background: #7bd35a; color: #fff; box-shadow: 0 5px 0 #57a83a; }
+  .num-btn.wrong { background: #ff8a8a; color: #fff; box-shadow: 0 5px 0 #d65f5f; animation: shake .4s ease; }
+  .num-btn:disabled { cursor: default; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  .tip { margin-top: 12px; font-weight: 700; color: #b0a090; text-align: center; }
+
+  /* --- celebration --- */
+  .confetti {
+    position: fixed;
+    top: -20px;
+    width: 12px; height: 12px;
+    border-radius: 3px;
+    pointer-events: none;
+    z-index: 10;
+    animation: fall linear forwards;
+  }
+  @keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(254, 249, 240, .85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+  }
+  .overlay.show { display: flex; }
+  .win-card {
+    background: #fff;
+    border-radius: 28px;
+    padding: 40px 48px;
+    text-align: center;
+    box-shadow: 0 6px 0 #ffd93d, 0 12px 40px rgba(0,0,0,.12);
+    animation: popIn .5s cubic-bezier(.17,.67,.29,1.3) both;
+  }
+  .win-card .big { font-size: 5rem; line-height: 1; }
+  .win-card h2 {
+    font-family: 'Lilita One', cursive;
+    font-size: 2.4rem;
+    margin: 12px 0 8px;
+    color: #ff6b9d;
+  }
+  .win-card p { font-weight: 700; color: #999; margin-bottom: 24px; font-size: 1.15rem; }
+  .win-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .play-again, .win-home {
+    font-family: 'Lilita One', cursive;
+    font-size: 1.4rem;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 40px;
+    color: #fff;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .play-again { background: #4ecdc4; box-shadow: 0 4px 0 #33a39b; }
+  .win-home { background: #c490e4; box-shadow: 0 4px 0 #9b6bbd; }
+
+  @media (max-width: 600px) {
+    .stars { font-size: 1rem; min-width: 0; }
+    .home, .level-btn { font-size: .85rem; padding: 6px 10px; }
+    .speak-btn { width: 52px; height: 52px; font-size: 1.6rem; }
+    .card { border-radius: 18px; padding: 10px 4px 12px; }
+    .fruits { grid-template-columns: repeat(var(--cols-sm, 3), auto); font-size: clamp(.9rem, 24cqi, 3rem); }
+    .topbar { flex-wrap: wrap; justify-content: center; }
+    .numbers { gap: 8px; }
+  }
+</style>
+<script src="../shared/kg.js"></script>
+<link rel="stylesheet" href="../shared/kg.css">
+</head>
+<body>
+
+<div class="topbar">
+  <a class="home" href="../index.html" data-t="games">← Games</a>
+  <div class="levels">
+    <button class="level-btn active" data-level="easy" data-t="easy">🐣 Up to 5</button>
+    <button class="level-btn" data-level="medium" data-t="medium">🌱 Up to 10</button>
+    <button class="level-btn" data-level="hard" data-t="hard">🌳 Up to 20</button>
+  </div>
+  <div class="stars" id="stars"></div>
+</div>
+
+<div class="prompt">
+  <div class="prompt-text" id="promptText"></div>
+  <button class="speak-btn" id="speakBtn" title="Say it again">🔊</button>
+</div>
+
+<div class="sum">
+  <div class="card a"><div class="num" id="numA"></div><div class="fruits" id="fruitsA"></div></div>
+  <div class="op">+</div>
+  <div class="card b"><div class="num" id="numB"></div><div class="fruits" id="fruitsB"></div></div>
+  <div class="op">=</div>
+  <div class="card ans" id="ansCard"><div class="num" id="numAns">?</div><div class="fruits" id="fruitsAns"></div></div>
+</div>
+
+<div class="numbers" id="numbers"></div>
+<div class="tip" data-t="tip">Tip: tap the fruit to count it!</div>
+
+<div class="overlay" id="overlay">
+  <div class="win-card">
+    <div class="big">🍓🏆</div>
+    <h2 data-t="super">Super adding!</h2>
+    <p id="winMsg"></p>
+    <div class="win-buttons">
+      <button class="play-again" id="playAgain" data-t="playAgain">Play again</button>
+      <a class="win-home" href="../index.html" data-t="games">← Games</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const { M, t: T, count, howMany, MW, num } = KG;
+const FRUITS = [
+  { emoji: '🍎', one: 'apple',      many: 'apples',       zh: '苹果[píng guǒ|apple]',         mw: MW.ge },
+  { emoji: '🍌', one: 'banana',     many: 'bananas',      zh: '香蕉[xiāng jiāo|banana]',      mw: MW.gen },
+  { emoji: '🍓', one: 'strawberry', many: 'strawberries', zh: '草莓[cǎo méi|strawberry]',     mw: MW.ke },
+  { emoji: '🍊', one: 'orange',     many: 'oranges',      zh: '橙子[chéng zi|orange]',        mw: MW.ge },
+  { emoji: '🍐', one: 'pear',       many: 'pears',        zh: '梨[lí|pear]',                  mw: MW.ge },
+  { emoji: '🍑', one: 'peach',      many: 'peaches',      zh: '桃子[táo zi|peach]',           mw: MW.ge },
+  { emoji: '🍒', one: 'cherry',     many: 'cherries',     zh: '樱桃[yīng tao|cherry]',        mw: MW.ke },
+  { emoji: '🍋', one: 'lemon',      many: 'lemons',       zh: '柠檬[níng méng|lemon]',        mw: MW.ge },
+  { emoji: '🥝', one: 'kiwi fruit', many: 'kiwi fruits',  zh: '猕猴桃[mí hóu táo|kiwi fruit]', mw: MW.ge },
+  { emoji: '🍍', one: 'pineapple',  many: 'pineapples',   zh: '菠萝[bō luó|pineapple]',       mw: MW.ge },
+  { emoji: '🍉', one: 'watermelon', many: 'watermelons',  zh: '西瓜[xī guā|watermelon]',      mw: MW.ge },
+  { emoji: '🥭', one: 'mango',      many: 'mangoes',      zh: '芒果[máng guǒ|mango]',         mw: MW.ge },
+];
+const DAO = { h: '道', p: 'dào', tone4: true }; // measure word for questions
+const TXT = {
+  ...KG.common,
+  easy: M('🐣 Up to 5', '🐣 5以内[wǔ yǐ nèi|up to 5]'),
+  medium: M('🌱 Up to 10', '🌱 10以内[shí yǐ nèi|up to 10]'),
+  hard: M('🌳 Up to 20', '🌳 20以内[èr shí yǐ nèi|up to 20]'),
+  tip: M('Tip: tap the fruit to count it!', '提示[tí shì|tip]：点[diǎn|tap] 水果[shuǐ guǒ|fruit] 来[lái|to] 数一数[shǔ yi shǔ|count]！'),
+  super: M('Super adding!', '加法[jiā fǎ|adding] 超[chāo|super] 棒[bàng|great]！'),
+  addSmall: M('Add them up!', '加起来[jiā qǐ lái|add them up]！'),
+  // "How many 🍎 altogether?" — the emoji sits in the middle, so it is passed in
+  askShort: f => M(`How many ${f.emoji} altogether?`, `一共[yí gòng|altogether] 有[yǒu|there are] ${howMany(f.mw)} ${f.emoji}？`),
+  ask: (a, b, f) => M(`${KG.numWord(a)} ${a === 1 ? f.one : f.many} plus ${KG.numWord(b)} ${b === 1 ? f.one : f.many}. How many ${f.many} altogether?`,
+    `${count(a, f.mw)} ${f.zh} 加[jiā|plus] ${count(b, f.mw)} ${f.zh}。一共[yí gòng|altogether] 有[yǒu|there are] ${howMany(f.mw)} ${f.zh}？`),
+  sentence: (a, b, total) => M(`${KG.numWord(a)} plus ${KG.numWord(b)} equals ${KG.numWord(total)}!`,
+    `${num(a).zh} 加[jiā|plus] ${num(b).zh} 等于[děng yú|equals] ${num(total).zh}！`),
+  notQuite: f => M(`Not quite! Try counting all the ${f.many}.`, `不太[bú tài|not quite] 对[duì|right]！数一数[shǔ yi shǔ|count] 所有的[suǒ yǒu de|all the] ${f.zh} 吧[ba|(suggestion)]。`),
+  perfect: M('Every answer right first time! WOW!', '每道题[měi dào tí|every question] 第一次[dì yī cì|first time] 就[jiù|already] 答对了[dá duì le|answered right]！哇[wa|wow]！'),
+  score: (c, total) => M(`You got ${c} out of ${total}! You are an adding star!`,
+    `${count(total, DAO)} 题[tí|questions] 答对了[dá duì le|got right] ${count(c, DAO)}！你[nǐ|you] 是[shì|are] 加法[jiā fǎ|adding] 小明星[xiǎo míng xīng|little star]！`),
+  winSay: M('Super adding! You are an adding star!', '加法[jiā fǎ|adding] 超[chāo|super] 棒[bàng|great]！你[nǐ|you] 是[shì|are] 加法[jiā fǎ|adding] 小明星[xiǎo míng xīng|little star]！'),
+};
+KG.fill(TXT);
+
+// each number being added is between min and max, and the total never goes over `total`
+const LEVELS = {
+  easy:   { min: 1, max: 4,  total: 5 },
+  medium: { min: 1, max: 9,  total: 10 },
+  hard:   { min: 2, max: 10, total: 20 },
+};
+const QUESTIONS_PER_ROUND = 5;
+
+const PRAISE = [M('Great adding!', '加得[jiā de|added] 真[zhēn|really] 好[hǎo|well]！'), ...KG.common.praise.slice(1, 6)];
+
+const $ = id => document.getElementById(id);
+
+/* ---- sound + speech ---- */
+let audioCtx;
+function tone(freq, start, dur, type = 'sine', vol = .18) {
+  audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
+  const t0 = audioCtx.currentTime + start;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type = type;
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(vol, t0);
+  g.gain.exponentialRampToValueAtTime(.001, t0 + dur);
+  o.connect(g).connect(audioCtx.destination);
+  o.start(t0);
+  o.stop(t0 + dur);
+}
+const sounds = {
+  pop(n)  { tone(400 + n * 40, 0, .15); },
+  right() { [523, 659, 784].forEach((f, i) => tone(f, i * .09, .25)); },
+  wrong() { tone(220, 0, .25, 'triangle', .15); tone(185, .12, .3, 'triangle', .15); },
+  win()   { [523, 587, 659, 784, 880, 1047].forEach((f, i) => tone(f, i * .1, .3)); },
+};
+const say = (msg, opts) => KG.say(msg, opts); // only talks when talking is switched on (or forced)
+
+const randInt = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ---- game state ---- */
+let level = 'easy';
+let q = null;             // { a, b, fruit }
+let questionNum = 0, correctCount = 0, firstTry = 0, wrongTries = 0, busy = false;
+let tapCount = 0, lastFruit = -1;
+let round = 0;            // bumped on restart so stale async steps stop
+
+const askText = () => TXT.ask(q.a, q.b, q.fruit);
+
+function renderStars() {
+  $('stars').innerHTML = Array.from({ length: QUESTIONS_PER_ROUND }, (_, i) =>
+    `<span class="${i < correctCount ? '' : 'empty'}">⭐</span>`).join('');
+}
+
+function fillFruits(el, n) {
+  el.innerHTML = '';
+  // rows of 5 (3 on phones), centred when there are fewer
+  el.style.setProperty('--cols', Math.min(n, 5));
+  el.style.setProperty('--cols-sm', Math.min(n, 3));
+  for (let i = 0; i < n; i++) {
+    const f = document.createElement('div');
+    f.className = 'fruit';
+    f.textContent = q.fruit.emoji;
+    f.addEventListener('pointerdown', e => { e.preventDefault(); onFruitTap(f); });
+    el.appendChild(f);
+  }
+}
+
+function newQuestion() {
+  const cfg = LEVELS[level];
+  let a, b;
+  do {
+    a = randInt(cfg.min, cfg.max);
+    b = randInt(cfg.min, cfg.max);
+  } while (a + b > cfg.total || (q && a === q.a && b === q.b));
+  let fi;
+  do { fi = randInt(0, FRUITS.length - 1); } while (fi === lastFruit);
+  lastFruit = fi;
+  q = { a, b, fruit: FRUITS[fi] };
+
+  wrongTries = 0;
+  tapCount = 0;
+  busy = false;
+  $('numA').textContent = a;
+  $('numB').textContent = b;
+  $('numAns').textContent = '?';
+  $('ansCard').classList.remove('solved');
+  $('fruitsAns').innerHTML = '';
+  $('fruitsAns').style.setProperty('--cols', Math.min(a + b, 5));
+  $('fruitsAns').style.setProperty('--cols-sm', Math.min(a + b, 3));
+  fillFruits($('fruitsA'), a);
+  fillFruits($('fruitsB'), b);
+
+  numbersEl.innerHTML = '';
+  for (let n = 1; n <= cfg.total; n++) {
+    const btn = document.createElement('button');
+    btn.className = 'num-btn';
+    btn.textContent = n;
+    btn.addEventListener('click', () => onAnswer(n, btn));
+    numbersEl.appendChild(btn);
+  }
+
+  $('promptText').innerHTML = `<span class="small">${T(TXT.addSmall)}</span>` +
+    `<span class="pop">${T(TXT.askShort(q.fruit))}</span>`;
+  say(askText());
+}
+const numbersEl = $('numbers');
+
+function startGame() {
+  round++;
+  $('overlay').classList.remove('show');
+  questionNum = 0;
+  correctCount = 0;
+  firstTry = 0;
+  q = null;
+  renderStars();
+  newQuestion();
+}
+
+function allFruitEls() {
+  return [...$('fruitsA').children, ...$('fruitsB').children];
+}
+
+function setBadge(f, n) {
+  f.querySelector('.badge')?.remove();
+  f.dataset.n = n || '';
+  if (!n) return;
+  const b = document.createElement('div');
+  b.className = 'badge';
+  b.textContent = n;
+  f.appendChild(b);
+}
+
+function hop(f) {
+  f.classList.remove('hop');
+  void f.offsetWidth;
+  f.classList.add('hop');
+}
+
+function onFruitTap(f) {
+  if (!q || busy) return;
+  hop(f);
+  if (f.dataset.n) { say(num(+f.dataset.n)); return; }
+  tapCount++;
+  setBadge(f, tapCount);
+  sounds.pop(tapCount);
+  say(num(tapCount));
+}
+
+// count every fruit, moving a copy into the answer box one at a time
+async function countAll(r) {
+  const fruits = allFruitEls();
+  fruits.forEach(f => setBadge(f, 0));
+  $('fruitsAns').innerHTML = '';
+  for (let i = 0; i < fruits.length; i++) {
+    if (r !== round) return false;
+    setBadge(fruits[i], i + 1);
+    hop(fruits[i]);
+    const copy = document.createElement('div');
+    copy.className = 'fruit in';
+    copy.textContent = q.fruit.emoji;
+    $('fruitsAns').appendChild(copy);
+    $('numAns').textContent = i + 1;
+    sounds.pop(i + 1);
+    say(num(i + 1));
+    await sleep(650);
+  }
+  return r === round;
+}
+
+async function onAnswer(n, btn) {
+  if (busy || !q) return;
+  const r = round;
+  const total = q.a + q.b;
+  const sentence = TXT.sentence(q.a, q.b, total);
+
+  if (n === total) {
+    busy = true;
+    btn.classList.add('right');
+    numbersEl.querySelectorAll('button').forEach(b => b.disabled = true);
+    sounds.right();
+    correctCount++;
+    if (wrongTries === 0) firstTry++;
+    renderStars();
+    const praise = PRAISE[randInt(0, PRAISE.length - 1)];
+    $('promptText').innerHTML = `<span class="pop" style="color:#57a83a">${T(praise)}</span>`;
+    confetti(18);
+    if (!await countAll(r)) return;
+    $('ansCard').classList.add('solved');
+    $('promptText').innerHTML = `<span class="pop" style="color:#57a83a">${q.a} + ${q.b} = ${total}</span>`;
+    say(KG.join(praise, sentence));
+    await sleep(3000);
+    if (r !== round) return;
+    nextQuestion();
+  } else {
+    wrongTries++;
+    btn.classList.add('wrong');
+    btn.disabled = true;
+    sounds.wrong();
+    if (wrongTries < 2) {
+      say(TXT.notQuite(q.fruit));
+      allFruitEls().forEach(f => f.classList.add('glow'));
+      setTimeout(() => allFruitEls().forEach(f => f.classList.remove('glow')), 2500);
+    } else {
+      // second miss: count them together and show the answer
+      busy = true;
+      numbersEl.querySelectorAll('button').forEach(b => b.disabled = true);
+      $('promptText').innerHTML = `<span class="small">${T(TXT.together)}</span><span class="pop">${q.fruit.emoji} ${q.a} + ${q.b}</span>`;
+      say(TXT.together);
+      await sleep(1500);
+      if (!await countAll(r)) return;
+      $('ansCard').classList.add('solved');
+      numbersEl.children[total - 1].classList.add('right');
+      $('promptText').innerHTML = `<span class="pop" style="color:#57a83a">${q.a} + ${q.b} = ${total}</span>`;
+      say(sentence);
+      await sleep(3500);
+      if (r !== round) return;
+      nextQuestion();
+    }
+  }
+}
+
+function nextQuestion() {
+  questionNum++;
+  if (questionNum >= QUESTIONS_PER_ROUND) return win();
+  newQuestion();
+}
+
+function win() {
+  q = null;
+  sounds.win();
+  confetti(80);
+  $('winMsg').innerHTML = T(firstTry === QUESTIONS_PER_ROUND ? TXT.perfect : TXT.score(correctCount, QUESTIONS_PER_ROUND));
+  setTimeout(() => $('overlay').classList.add('show'), 900);
+  say(TXT.winSay);
+}
+
+function confetti(n) {
+  const colors = ['#ff6b9d', '#ffd93d', '#6ec6ff', '#4ecdc4', '#c490e4', '#ff9a56'];
+  for (let i = 0; i < n; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.background = colors[i % colors.length];
+    c.style.animationDuration = 1.6 + Math.random() * 1.6 + 's';
+    c.style.animationDelay = Math.random() * .4 + 's';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 4000);
+  }
+}
+
+document.querySelectorAll('.level-btn').forEach(b => b.addEventListener('click', () => {
+  level = b.dataset.level;
+  document.querySelectorAll('.level-btn').forEach(x => x.classList.toggle('active', x === b));
+  startGame();
+}));
+// the speaker button always talks, even when automatic talking is off
+$('speakBtn').addEventListener('click', () => { if (q) say(askText(), { force: true }); });
+$('playAgain').addEventListener('click', startGame);
+
+startGame();
+</script>
+</body>
+</html>

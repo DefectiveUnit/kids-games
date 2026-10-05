@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planet Explorer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lilita+One&family=Quicksand:wght@500;700&display=swap');
+
+  :root {
+    --space: #161a3a;
+    --space-deep: #0b0d22;
+    --ink: #3a3a3a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Quicksand', sans-serif;
+    min-height: 100vh;
+    background: #fef9f0;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 16px 32px;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  /* --- top bar --- */
+  .topbar {
+    width: 100%;
+    max-width: 1100px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .home {
+    font-family: 'Lilita One', cursive;
+    text-decoration: none;
+    color: #fff;
+    background: #c490e4;
+    padding: 8px 18px;
+    border-radius: 40px;
+    box-shadow: 0 3px 0 #9b6bbd;
+    font-size: 1.05rem;
+  }
+  .modes { display: flex; gap: 8px; }
+  .mode-btn {
+    font-family: 'Lilita One', cursive;
+    font-size: 1.05rem;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 40px;
+    background: #fff;
+    color: #999;
+    box-shadow: 0 3px 0 #e2d8c8;
+    cursor: pointer;
+  }
+  .mode-btn.active { background: #4ecdc4; color: #fff; box-shadow: 0 3px 0 #33a39b; }
+
+  .stars {
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+    min-width: 8.5em;
+    text-align: right;
+  }
+  .stars .empty { filter: grayscale(1); opacity: .25; }
+
+  /* --- prompt --- */
+  .prompt {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 92px;
+    margin-bottom: 12px;
+  }
+  .prompt-text {
+    font-family: 'Lilita One', cursive;
+    font-size: clamp(1.8rem, 5vw, 3.2rem);
+    text-align: center;
+    line-height: 1.1;
+  }
+  .prompt-text .small {
+    display: block;
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1rem, 2.4vw, 1.3rem);
+    color: #b0a090;
+  }
+  .target-word { display: inline-block; padding: 0 .15em; text-shadow: 2px 2px 0 rgba(0,0,0,.12); }
+  .target-word.pop { animation: popIn .5s cubic-bezier(.17,.67,.29,1.3) both; }
+
+  .speak-btn {
+    font-size: 2rem;
+    width: 64px; height: 64px;
+    flex: none;
+    border-radius: 50%;
+    border: none;
+    background: #ffd93d;
+    box-shadow: 0 4px 0 #e6b800;
+    cursor: pointer;
+  }
+  .speak-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #e6b800; }
+
+  @keyframes popIn {
+    0%   { opacity: 0; transform: scale(.5); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  /* --- space scene --- */
+  .space-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 1100px;
+    border-radius: 28px;
+    overflow: hidden;
+    background: radial-gradient(ellipse at 10% 50%, #2a2f66 0%, var(--space) 45%, var(--space-deep) 100%);
+    box-shadow: 0 4px 0 #2a2f66, 0 8px 24px rgba(0,0,0,.15);
+  }
+  svg { display: block; width: 100%; height: auto; }
+
+  .twinkle { animation: twinkle ease-in-out infinite alternate; }
+  @keyframes twinkle { from { opacity: .2; } to { opacity: 1; } }
+
+  .orbit { fill: none; stroke: rgba(255,255,255,.12); stroke-width: 1.2; stroke-dasharray: 4 6; }
+
+  .body { cursor: pointer; }
+  .body .art {
+    transform-box: fill-box;
+    transform-origin: center;
+    transition: filter .25s ease;
+  }
+  .body .hit { fill: transparent; }
+  .glow {
+    fill: none;
+    stroke: var(--c);
+    stroke-width: 4;
+    opacity: 0;
+    transition: opacity .3s ease;
+    pointer-events: none;
+  }
+  @media (hover: hover) {
+    .body:hover .art { filter: brightness(1.2); }
+  }
+  .body.found .glow { opacity: .9; }
+  .body.wrong .art { animation: shake .45s ease; }
+  .body.hint .glow { animation: pulse 1s ease-in-out infinite; }
+  .body.bounce .art { animation: bounce .5s cubic-bezier(.17,.67,.29,1.3); }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-5px); }
+    80% { transform: translateX(5px); }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 1; }
+  }
+  @keyframes bounce {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+
+  .label {
+    font-family: 'Lilita One', cursive;
+    font-size: 22px;
+    fill: #fff;
+    stroke: rgba(0,0,0,.6);
+    stroke-width: 5px;
+    paint-order: stroke;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .3s ease;
+  }
+  .label.show { opacity: 1; }
+  .label .py { font-family: 'Quicksand', sans-serif; font-size: 13px; stroke-width: 4px; }
+
+  /* --- fact strip --- */
+  .fact {
+    min-height: 2.4em;
+    margin-top: 14px;
+    max-width: 900px;
+    text-align: center;
+    font-weight: 700;
+    font-size: clamp(1rem, 2.4vw, 1.35rem);
+    color: #8a7a6a;
+  }
+  .fact.pop { animation: popIn .4s cubic-bezier(.17,.67,.29,1.3) both; }
+
+  /* --- speech bubble for wrong taps --- */
+  .bubble {
+    position: absolute;
+    transform: translate(-50%, -120%);
+    background: #fff;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-family: 'Lilita One', cursive;
+    font-size: clamp(1rem, 2.4vw, 1.5rem);
+    box-shadow: 0 4px 14px rgba(0,0,0,.25);
+    pointer-events: none;
+    white-space: nowrap;
+    animation: popIn .3s cubic-bezier(.17,.67,.29,1.3) both;
+  }
+  .bubble::after {
+    content: '';
+    position: absolute;
+    left: 50%; bottom: -10px;
+    transform: translateX(-50%);
+    border: 10px solid transparent;
+    border-bottom: none;
+    border-top-color: #fff;
+  }
+
+  /* --- celebration --- */
+  .confetti {
+    position: fixed;
+    top: -20px;
+    width: 12px; height: 12px;
+    border-radius: 3px;
+    pointer-events: none;
+    z-index: 10;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(720deg); }
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(254, 249, 240, .85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+  }
+  .overlay.show { display: flex; }
+  .win-card {
+    background: #fff;
+    border-radius: 28px;
+    padding: 40px 48px;
+    text-align: center;
+    box-shadow: 0 6px 0 #ffd93d, 0 12px 40px rgba(0,0,0,.12);
+    animation: popIn .5s cubic-bezier(.17,.67,.29,1.3) both;
+  }
+  .win-card .big { font-size: 5rem; line-height: 1; }
+  .win-card h2 {
+    font-family: 'Lilita One', cursive;
+    font-size: 2.4rem;
+    margin: 12px 0 8px;
+    color: #ff6b9d;
+  }
+  .win-card p { font-weight: 700; color: #999; margin-bottom: 24px; font-size: 1.15rem; }
+  .win-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .play-again, .win-home {
+    font-family: 'Lilita One', cursive;
+    font-size: 1.4rem;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 40px;
+    color: #fff;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .play-again { background: #4ecdc4; box-shadow: 0 4px 0 #33a39b; }
+  .win-home { background: #c490e4; box-shadow: 0 4px 0 #9b6bbd; }
+
+  @media (max-width: 600px) {
+    .stars { font-size: 1rem; min-width: 0; }
+    .home, .mode-btn { font-size: .9rem; padding: 6px 12px; }
+    .speak-btn { width: 52px; height: 52px; font-size: 1.6rem; }
+  }
+</style>
+<script src="../shared/kg.js"></script>
+<link rel="stylesheet" href="../shared/kg.css">
+</head>
+<body>
+
+<div class="topbar">
+  <a class="home" href="../index.html" data-t="games">← Games</a>
+  <div class="modes">
+    <button class="mode-btn active" data-mode="play" data-t="play">🎯 Play</button>
+    <button class="mode-btn" data-mode="learn" data-t="learn">📖 Learn</button>
+  </div>
+  <div class="stars" id="stars"></div>
+</div>
+
+<div class="prompt">
+  <div class="prompt-text" id="promptText"></div>
+  <button class="speak-btn" id="speakBtn" title="Say it again">🔊</button>
+</div>
+
+<div class="space-wrap" id="spaceWrap">
+  <svg id="space" viewBox="0 0 1000 340" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <!-- light from the Sun on the left, shadow on the right -->
+      <radialGradient id="shade" cx="30%" cy="40%" r="75%">
+        <stop offset="0%" stop-color="#fff" stop-opacity=".35"/>
+        <stop offset="45%" stop-color="#fff" stop-opacity="0"/>
+        <stop offset="100%" stop-color="#000" stop-opacity=".55"/>
+      </radialGradient>
+      <radialGradient id="sunGrad" cx="60%" cy="50%" r="60%">
+        <stop offset="0%" stop-color="#fff6b0"/>
+        <stop offset="50%" stop-color="#ffd23d"/>
+        <stop offset="100%" stop-color="#ff8a1e"/>
+      </radialGradient>
+      <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="60%" stop-color="#ffb43d" stop-opacity=".5"/>
+        <stop offset="100%" stop-color="#ffb43d" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <g id="starfield"></g>
+    <g id="orbits"></g>
+    <g id="bodies"></g>
+  </svg>
+</div>
+
+<div class="fact" id="fact"></div>
+
+<div class="overlay" id="overlay">
+  <div class="win-card">
+    <div class="big">🪐🏆</div>
+    <h2 data-t="foundAll">You found every planet!</h2>
+    <p id="winMsg"></p>
+    <div class="win-buttons">
+      <button class="play-again" id="playAgain" data-t="playAgain">Play again</button>
+      <a class="win-home" href="../index.html" data-t="games">← Games</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const NS = 'http://www.w3.org/2000/svg';
+const { M, t: T } = KG;
+const TXT = {
+  ...KG.common,
+  foundAll: M('You found every planet!', '你[nǐ|you] 找到了[zhǎo dào le|found] 所有的[suǒ yǒu de|all the] 行星[xíng xīng|planets]！'),
+  find: name => M(`Can you find ${name.en}?`, `你[nǐ|you] 能[néng|can] 找到[zhǎo dào|find] ${name.zh} 吗[ma|(question)]？`),
+  wrong: name => M(`That's ${name.en}. Try again!`, `这是[zhè shì|this is] ${name.zh}。再[zài|again] 试[shì|try] 一次[yí cì|one time]！`),
+  thatsSun: M("That's the Sun!", '这是[zhè shì|this is] 太阳[tài yáng|the Sun]！'),
+  sun: M('The Sun', '太阳[tài yáng|the Sun]'),
+  perfect: M('All 8 planets with no mistakes! WOW!', '八个[bā gè|eight] 行星[xíng xīng|planets]，一个[yí gè|a single] 错[cuò|mistake] 都[dōu|even] 没有[méi yǒu|none]！哇[wa|wow]！'),
+  allFound: M('All 8 planets! You are a space explorer!', '八个[bā gè|eight] 行星[xíng xīng|planets] 全[quán|all] 找到了[zhǎo dào le|found]！你[nǐ|you] 是[shì|are] 太空[tài kōng|space] 探险家[tàn xiǎn jiā|explorer]！'),
+  explorer: M('Space Explorer!', '太空[tài kōng|space] 探险家[tàn xiǎn jiā|explorer]！'),
+  winSay: M('You found all eight planets! You are a space explorer!', '你[nǐ|you] 找到了[zhǎo dào le|found] 八个[bā gè|eight] 行星[xíng xīng|planets]！你[nǐ|you] 是[shì|are] 太空[tài kōng|space] 探险家[tàn xiǎn jiā|explorer]！'),
+  tapSmall: M('Tap a planet', '点[diǎn|tap] 一个[yí gè|a] 行星[xíng xīng|planet]'),
+  tapBig: M('to hear about it!', '听[tīng|hear] 它的[tā de|its] 小知识[xiǎo zhī shi|fun fact]！'),
+  tapSay: M('Tap a planet to hear about it!', '点[diǎn|tap] 一个[yí gè|a] 行星[xíng xīng|planet]，听[tīng|hear] 它的[tā de|its] 小知识[xiǎo zhī shi|fun fact]！'),
+};
+KG.fill(TXT);
+const CY = 170;               // the line every planet sits on
+const SUN = { x: -90, r: 190 };
+
+// art() draws each planet centred on (0,0) with radius r; colours are cartoon-true so kids learn them
+const PLANETS = [
+  { id: 'mercury', name: M('Mercury', '水星[shuǐ xīng|Mercury]'), x: 190, r: 14, color: '#b9b3ad',
+    fact: M('Mercury is the closest planet to the Sun, and the smallest!', '水星[shuǐ xīng|Mercury] 离[lí|from] 太阳[tài yáng|the Sun] 最近[zuì jìn|closest]，也是[yě shì|and is also] 最小的[zuì xiǎo de|the smallest] 行星[xíng xīng|planet]！'),
+    art: r => `<circle r="${r}" fill="#b9b3ad"/>
+      <circle cx="-4" cy="-4" r="3" fill="#8f8882"/><circle cx="5" cy="3" r="2.5" fill="#8f8882"/><circle cx="-3" cy="6" r="1.8" fill="#8f8882"/>` },
+  { id: 'venus', name: M('Venus', '金星[jīn xīng|Venus]'), x: 250, r: 22, color: '#f2c879',
+    fact: M('Venus is the hottest planet. It is covered in thick yellow clouds!', '金星[jīn xīng|Venus] 是[shì|is] 最热的[zuì rè de|the hottest] 行星[xíng xīng|planet]。它[tā|it] 被[bèi|is] 厚厚的[hòu hòu de|thick] 黄色[huáng sè|yellow] 云层[yún céng|clouds] 包着[bāo zhe|wrapped in]！'),
+    art: r => `<circle r="${r}" fill="#f2c879"/>
+      <path d="M-20,-6 Q-5,-12 10,-5 T20,-8" stroke="#e0a95a" stroke-width="4" fill="none" opacity=".7"/>
+      <path d="M-19,7 Q-4,2 9,8 T19,6" stroke="#fbe0a8" stroke-width="4" fill="none" opacity=".8"/>` },
+  { id: 'earth', name: M('Earth', '地球[dì qiú|Earth]'), x: 318, r: 24, color: '#3d8de0',
+    fact: M('Earth is our home! It is the only planet we know of with living things.', '地球[dì qiú|Earth] 是[shì|is] 我们的[wǒ men de|our] 家[jiā|home]！它[tā|it] 是[shì|is] 我们[wǒ men|we] 知道的[zhī dào de|know of] 唯一[wéi yī|only] 有[yǒu|has] 生命的[shēng mìng de|living things] 行星[xíng xīng|planet]。'),
+    art: r => `<clipPath id="earthClip"><circle r="${r}"/></clipPath>
+      <circle r="${r}" fill="#3d8de0"/>
+      <g clip-path="url(#earthClip)" fill="#5cc16a">
+        <path d="M-18,-14 q8,-6 14,0 q4,6 -2,10 q-6,6 -4,14 q-8,-2 -10,-10 q-4,-8 2,-14z"/>
+        <path d="M4,-6 q10,-4 16,4 q2,8 -6,10 q-2,8 -8,6 q-4,-10 -2,-20z"/>
+      </g>
+      <path d="M-14,-18 q10,-4 20,0" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".85"/>
+      <path d="M-6,16 q8,3 16,-1" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".85"/>` },
+  { id: 'mars', name: M('Mars', '火星[huǒ xīng|Mars]'), x: 380, r: 18, color: '#e0603a',
+    fact: M('Mars is the red planet. It is red because of rusty dust!', '火星[huǒ xīng|Mars] 是[shì|is] 红色的[hóng sè de|red] 行星[xíng xīng|planet]。因为[yīn wèi|because] 它的[tā de|its] 尘土[chén tǔ|dust] 生锈了[shēng xiù le|is rusty]！'),
+    art: r => `<circle r="${r}" fill="#e0603a"/>
+      <ellipse cx="0" cy="-15" rx="7" ry="3" fill="#fff" opacity=".9"/>
+      <circle cx="-5" cy="2" r="4" fill="#b8452a"/><circle cx="6" cy="7" r="3" fill="#b8452a"/>` },
+  { id: 'jupiter', name: M('Jupiter', '木星[mù xīng|Jupiter]'), x: 480, r: 60, color: '#d9a066',
+    fact: M('Jupiter is the biggest planet. It has a giant storm called the Great Red Spot!', '木星[mù xīng|Jupiter] 是[shì|is] 最大的[zuì dà de|the biggest] 行星[xíng xīng|planet]。它[tā|it] 有[yǒu|has] 一个[yí gè|a] 巨大的[jù dà de|giant] 风暴[fēng bào|storm]，叫[jiào|called] 大红斑[dà hóng bān|the Great Red Spot]！'),
+    art: r => `<clipPath id="jupClip"><circle r="${r}"/></clipPath>
+      <circle r="${r}" fill="#e8c39a"/>
+      <g clip-path="url(#jupClip)">
+        <rect x="-60" y="-42" width="120" height="10" fill="#c98a54"/>
+        <rect x="-60" y="-20" width="120" height="13" fill="#b5703f"/>
+        <rect x="-60" y="4" width="120" height="9" fill="#d9a066"/>
+        <rect x="-60" y="22" width="120" height="12" fill="#b5703f"/>
+        <rect x="-60" y="42" width="120" height="8" fill="#c98a54"/>
+      </g>
+      <ellipse cx="18" cy="16" rx="13" ry="8" fill="#c0442c"/>` },
+  { id: 'saturn', name: M('Saturn', '土星[tǔ xīng|Saturn]'), x: 640, r: 50, color: '#e8cf8a',
+    fact: M('Saturn has beautiful rings made of ice and rock!', '土星[tǔ xīng|Saturn] 有[yǒu|has] 漂亮的[piào liang de|beautiful] 光环[guāng huán|rings]，是[shì|it is] 冰[bīng|ice] 和[hé|and] 石头[shí tou|rock] 做的[zuò de|made of]！'),
+    art: r => `<path d="M-100,0 A100,22 0 0 1 100,0" transform="rotate(-12)" stroke="#d6bb7a" stroke-width="12" fill="none"/>
+      <circle r="${r}" fill="#e8cf8a"/>
+      <clipPath id="satClip"><circle r="${r}"/></clipPath>
+      <g clip-path="url(#satClip)" opacity=".55">
+        <rect x="-50" y="-30" width="100" height="8" fill="#c9a865"/>
+        <rect x="-50" y="12" width="100" height="10" fill="#c9a865"/>
+      </g>
+      <circle r="${r}" fill="url(#shade)"/>
+      <path d="M-100,0 A100,22 0 0 0 100,0" transform="rotate(-12)" stroke="#f0dca0" stroke-width="12" fill="none"/>`,
+    shaded: true },
+  { id: 'uranus', name: M('Uranus', '天王星[tiān wáng xīng|Uranus]'), x: 800, r: 34, color: '#8fe0e6',
+    fact: M('Uranus spins on its side, like a ball rolling around the Sun!', '天王星[tiān wáng xīng|Uranus] 是[shì|is] 躺着[tǎng zhe|lying down] 转的[zhuàn de|spinning]，像[xiàng|like] 一个[yí gè|a] 滚动的[gǔn dòng de|rolling] 球[qiú|ball]！'),
+    art: r => `<ellipse rx="12" ry="50" transform="rotate(-8)" stroke="#c4f0f2" stroke-width="3" fill="none" opacity=".7"/>
+      <circle r="${r}" fill="#8fe0e6"/>`},
+  { id: 'neptune', name: M('Neptune', '海王星[hǎi wáng xīng|Neptune]'), x: 905, r: 33, color: '#3a62d6',
+    fact: M('Neptune is the farthest planet from the Sun, and the windiest!', '海王星[hǎi wáng xīng|Neptune] 离[lí|from] 太阳[tài yáng|the Sun] 最远[zuì yuǎn|farthest]，也是[yě shì|and is also] 风[fēng|wind] 最大的[zuì dà de|strongest] 行星[xíng xīng|planet]！'),
+    art: r => `<circle r="${r}" fill="#3a62d6"/>
+      <ellipse cx="-8" cy="6" rx="8" ry="5" fill="#26429e"/>
+      <path d="M-26,-10 q16,-4 32,0" stroke="#7e9cf0" stroke-width="3" fill="none" opacity=".7"/>` },
+];
+const byId = Object.fromEntries(PLANETS.map(p => [p.id, p]));
+const SUN_FACT = M('The Sun is not a planet. It is a star! All the planets go around it.', '太阳[tài yáng|the Sun] 不是[bú shì|is not] 行星[xíng xīng|a planet]。它[tā|it] 是[shì|is] 一颗[yì kē|a] 恒星[héng xīng|star]！所有[suǒ yǒu|all] 行星[xíng xīng|planets] 都[dōu|all] 绕着[rào zhe|around] 它[tā|it] 转[zhuàn|go]。');
+
+const PRAISE = [...KG.common.praise, M('Out of this world!', '太[tài|so] 神奇了[shén qí le|amazing]！')];
+
+/* ---- build the scene ---- */
+const svg = document.getElementById('space');
+
+const starfield = document.getElementById('starfield');
+for (let i = 0; i < 90; i++) {
+  const s = document.createElementNS(NS, 'circle');
+  s.setAttribute('cx', Math.random() * 1000);
+  s.setAttribute('cy', Math.random() * 340);
+  s.setAttribute('r', .6 + Math.random() * 1.6);
+  s.setAttribute('fill', '#fff');
+  s.setAttribute('class', 'twinkle');
+  s.style.animationDuration = 1 + Math.random() * 3 + 's';
+  s.style.animationDelay = -Math.random() * 3 + 's';
+  starfield.appendChild(s);
+}
+
+const orbits = document.getElementById('orbits');
+for (const p of PLANETS) {
+  const o = document.createElementNS(NS, 'circle');
+  o.setAttribute('cx', SUN.x);
+  o.setAttribute('cy', CY);
+  o.setAttribute('r', p.x - SUN.x);
+  o.setAttribute('class', 'orbit');
+  orbits.appendChild(o);
+}
+
+const bodiesEl = document.getElementById('bodies');
+const groups = {}, labelEls = {};
+
+const sun = document.createElementNS(NS, 'g');
+sun.setAttribute('class', 'body');
+sun.dataset.id = 'sun';
+sun.innerHTML = `<circle cx="${SUN.x}" cy="${CY}" r="${SUN.r + 30}" fill="url(#sunGlow)"/>
+  <circle class="art" cx="${SUN.x}" cy="${CY}" r="${SUN.r}" fill="url(#sunGrad)"/>`;
+sun.addEventListener('click', onTap);
+bodiesEl.appendChild(sun);
+
+for (const p of PLANETS) {
+  const g = document.createElementNS(NS, 'g');
+  g.setAttribute('class', 'body');
+  g.setAttribute('transform', `translate(${p.x},${CY})`);
+  g.style.setProperty('--c', p.color);
+  g.dataset.id = p.id;
+  const hitR = Math.max(p.r + 8, 30); // little planets still need a finger-sized target
+  g.innerHTML = `<circle class="hit" r="${hitR}"/>
+    <circle class="glow" r="${p.r + 9}"/>
+    <g class="art">${p.art(p.r)}${p.shaded ? '' : `<circle r="${p.r}" fill="url(#shade)"/>`}</g>`;
+  g.addEventListener('click', onTap);
+  bodiesEl.appendChild(g);
+  groups[p.id] = g;
+
+  const t = document.createElementNS(NS, 'text');
+  t.setAttribute('x', p.x);
+  // alternate labels above/below so the small inner planets' names don't collide
+  const below = ['mercury', 'earth', 'jupiter', 'saturn', 'neptune'].includes(p.id);
+  t.setAttribute('y', below ? CY + Math.max(p.r, 30) + 34 : CY - Math.max(p.r, 30) - 30);
+  if (p.id === 'saturn') t.setAttribute('y', CY + 92);
+  t.setAttribute('class', 'label');
+  const { text, pinyin } = KG.parts(p.name);
+  // Chinese labels get a small pinyin line above the characters
+  t.innerHTML = pinyin
+    ? `<tspan x="${p.x}" dy="-.75em" class="py">${pinyin}</tspan><tspan x="${p.x}" dy="1.15em">${text}</tspan>`
+    : text;
+  svg.appendChild(t);
+  labelEls[p.id] = t;
+}
+
+/* ---- sound + speech ---- */
+let audioCtx;
+function tone(freq, start, dur, type = 'sine', vol = .18) {
+  audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
+  const t0 = audioCtx.currentTime + start;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type = type;
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(vol, t0);
+  g.gain.exponentialRampToValueAtTime(.001, t0 + dur);
+  o.connect(g).connect(audioCtx.destination);
+  o.start(t0);
+  o.stop(t0 + dur);
+}
+const sounds = {
+  right() { [523, 659, 784].forEach((f, i) => tone(f, i * .09, .25)); },
+  wrong() { tone(220, 0, .25, 'triangle', .15); tone(185, .12, .3, 'triangle', .15); },
+  win()   { [523, 587, 659, 784, 880, 1047].forEach((f, i) => tone(f, i * .1, .3)); },
+};
+
+const say = (msg, opts) => KG.say(msg, opts); // only talks when talking is switched on (or forced)
+
+/* ---- game state ---- */
+const promptText = document.getElementById('promptText');
+const starsEl = document.getElementById('stars');
+const factEl = document.getElementById('fact');
+let mode = 'play';
+let queue = [], target = null, found = new Set(), misses = 0, totalMisses = 0, busy = false;
+let round = 0; // bumped on every restart/mode change so stale timers do nothing
+
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function showFact(text) {
+  factEl.innerHTML = T(text);
+  factEl.classList.remove('pop');
+  void factEl.offsetWidth;
+  factEl.classList.add('pop');
+}
+
+function word(text, color) {
+  return `<span class="target-word pop" style="color:${color}">${T(text)}</span>`;
+}
+
+function resetScene() {
+  for (const id in groups) {
+    groups[id].classList.remove('found', 'hint', 'wrong', 'bounce');
+    labelEls[id].classList.remove('show');
+  }
+  document.querySelectorAll('.bubble').forEach(b => b.remove());
+  factEl.textContent = '';
+}
+
+function renderStars() {
+  if (mode !== 'play') { starsEl.innerHTML = ''; return; }
+  starsEl.innerHTML = PLANETS.map((_, i) =>
+    `<span class="${i < found.size ? '' : 'empty'}">⭐</span>`).join('');
+}
+
+function startGame() {
+  round++;
+  resetScene();
+  found = new Set();
+  totalMisses = 0;
+  queue = shuffle(PLANETS.map(p => p.id));
+  renderStars();
+  nextTarget();
+}
+
+function nextTarget() {
+  misses = 0;
+  busy = false;
+  target = queue.shift();
+  if (!target) return win();
+  const name = byId[target].name;
+  promptText.innerHTML = `<span class="small">${T(TXT.canYouFind)}</span>` + word(name, byId[target].color);
+  say(TXT.find(name));
+}
+
+function bounce(g) {
+  g.classList.remove('bounce');
+  void g.getBoundingClientRect();
+  g.classList.add('bounce');
+}
+
+function onTap(e) {
+  const id = e.currentTarget.dataset.id;
+  if (mode === 'learn') return learnTap(id);
+
+  if (id === 'sun') {
+    if (busy) return;
+    showBubble(TXT.thatsSun, e);
+    say(SUN_FACT);
+    showFact(SUN_FACT);
+    return;
+  }
+  if (busy || found.has(id)) {
+    if (found.has(id)) say(byId[id].name);
+    return;
+  }
+
+  const p = byId[id];
+  if (id === target) {
+    busy = true;
+    found.add(id);
+    const g = groups[id];
+    g.classList.remove('hint');
+    g.classList.add('found');
+    bounce(g);
+    labelEls[id].classList.add('show');
+    sounds.right();
+    const praise = PRAISE[Math.floor(Math.random() * PRAISE.length)];
+    promptText.innerHTML = word(praise, p.color);
+    showFact(p.fact);
+    say(KG.join(praise, p.fact));
+    renderStars();
+    confetti(18);
+    // wait for the fact to be read out before moving on
+    const r = round;
+    setTimeout(() => waitForSpeechThenNext(r), KG.voice ? 2500 : 4500); // give readers time when talking is off
+  } else {
+    misses++;
+    totalMisses++;
+    sounds.wrong();
+    const g = groups[id];
+    g.classList.remove('wrong');
+    void g.getBoundingClientRect(); // force reflow so the shake restarts
+    g.classList.add('wrong');
+    showBubble(TXT.thatsA(p.name), e);
+    say(TXT.wrong(p.name));
+    if (misses >= 2) groups[target].classList.add('hint');
+  }
+}
+
+function waitForSpeechThenNext(r, waited = 0) {
+  if (r !== round) return;
+  if (window.speechSynthesis && speechSynthesis.speaking && waited < 8000) {
+    return setTimeout(() => waitForSpeechThenNext(r, waited + 250), 250);
+  }
+  nextTarget();
+}
+
+function learnTap(id) {
+  for (const k in groups) { groups[k].classList.remove('found'); labelEls[k].classList.remove('show'); }
+  sounds.right();
+  if (id === 'sun') {
+    promptText.innerHTML = word(TXT.sun, '#ff9a1e');
+    showFact(SUN_FACT);
+    say(SUN_FACT);
+    return;
+  }
+  const p = byId[id];
+  const g = groups[id];
+  g.classList.add('found');
+  bounce(g);
+  labelEls[id].classList.add('show');
+  promptText.innerHTML = word(p.name, p.color);
+  showFact(p.fact);
+  say(KG.join(p.name, '.', p.fact));
+}
+
+function showBubble(text, e) {
+  document.querySelectorAll('.bubble').forEach(b => b.remove());
+  const wrap = document.getElementById('spaceWrap');
+  const r = wrap.getBoundingClientRect();
+  const b = document.createElement('div');
+  b.className = 'bubble';
+  b.innerHTML = T(text);
+  b.style.left = Math.min(Math.max(e.clientX - r.left, 90), r.width - 90) + 'px';
+  b.style.top = Math.max(e.clientY - r.top, 60) + 'px';
+  wrap.appendChild(b);
+  setTimeout(() => b.remove(), 1600);
+}
+
+function confetti(n) {
+  for (let i = 0; i < n; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.background = PLANETS[i % PLANETS.length].color;
+    c.style.animationDuration = 1.6 + Math.random() * 1.6 + 's';
+    c.style.animationDelay = Math.random() * .4 + 's';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 4000);
+  }
+}
+
+function win() {
+  target = null;
+  sounds.win();
+  confetti(80);
+  document.getElementById('winMsg').innerHTML = T(totalMisses === 0 ? TXT.perfect : TXT.allFound);
+  promptText.innerHTML = word(TXT.explorer, '#ff6b9d');
+  setTimeout(() => document.getElementById('overlay').classList.add('show'), 900);
+  say(TXT.winSay);
+}
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  if (m === 'learn') {
+    round++;
+    resetScene();
+    target = null;
+    busy = false;
+    renderStars();
+    promptText.innerHTML = `<span class="small">${T(TXT.tapSmall)}</span>${T(TXT.tapBig)}`;
+    say(TXT.tapSay);
+  } else {
+    startGame();
+  }
+}
+
+document.querySelectorAll('.mode-btn').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
+document.getElementById('speakBtn').addEventListener('click', () => {
+  // the speaker button always talks, even when automatic talking is off
+  if (mode === 'play' && target) say(TXT.find(byId[target].name), { force: true });
+  else if (mode === 'learn') say(TXT.tapSay, { force: true });
+});
+document.getElementById('playAgain').addEventListener('click', () => {
+  document.getElementById('overlay').classList.remove('show');
+  startGame();
+});
+
+startGame();
+</script>
+</body>
+</html>

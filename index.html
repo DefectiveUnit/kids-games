@@ -144,6 +144,9 @@
   .card:nth-child(2) { --accent: var(--mint-green);   animation-delay: .38s; }
   .card:nth-child(3) { --accent: var(--warm-orange);  animation-delay: .51s; }
   .card:nth-child(4) { --accent: var(--sky-blue);     animation-delay: .64s; }
+  .card:nth-child(5) { --accent: var(--sunny-yellow); animation-delay: .77s; }
+  .card:nth-child(6) { --accent: var(--pop-pink);     animation-delay: .90s; }
+  .card:nth-child(7) { --accent: var(--mint-green);   animation-delay: 1.03s; }
 
   @keyframes cardIn {
     0%   { opacity: 0; transform: translateY(40px) scale(.9); }
@@ -235,6 +238,8 @@
     .card-icon { font-size: 52px; }
   }
 </style>
+<script src="shared/kg.js"></script>
+<link rel="stylesheet" href="shared/kg.css">
 </head>
 <body>
 
@@ -243,31 +248,84 @@
 
 <div class="page">
   <h1 class="title">
-    <span class="word1">Game</span>
-    <span class="word2">Zone</span>
+    <span class="word1" data-t="w1">Game</span>
+    <span class="word2" data-t="w2">Zone</span>
     <span class="word3">!</span>
   </h1>
-  <p class="subtitle">Pick a game and let's play</p>
+  <p class="subtitle" data-t="subtitle">Pick a game and let's play</p>
 
   <div class="games">
     <a class="card" href="memory-game/index.html">
       <div class="card-icon">👸</div>
-      <div class="card-title">Princess Memory Match</div>
-      <p class="card-desc">Flip cards and find matching Disney princesses!</p>
-      <span class="card-badge">Play</span>
+      <div class="card-title" data-t="memory">Princess Memory Match</div>
+      <p class="card-desc" data-t="d0">Flip cards and find matching Disney princesses!</p>
+      <span class="card-badge" data-t="play">Play</span>
     </a>
     <a class="card" href="typing-game/index.html">
       <div class="card-icon">⌨️</div>
-      <div class="card-title">Typing Game</div>
-      <p class="card-desc">Learn to type words with pictures and sounds!</p>
-      <span class="card-badge">Play</span>
+      <div class="card-title" data-t="typing">Typing Game</div>
+      <p class="card-desc" data-t="d1">Learn to type words with pictures and sounds!</p>
+      <span class="card-badge" data-t="play">Play</span>
+    </a>
+    <a class="card" href="continents-game/index.html">
+      <div class="card-icon">🌍</div>
+      <div class="card-title" data-t="continents">Continent Explorer</div>
+      <p class="card-desc" data-t="d2">Find the continents on the world map!</p>
+      <span class="card-badge" data-t="play">Play</span>
+    </a>
+    <a class="card" href="planets-game/index.html">
+      <div class="card-icon">🪐</div>
+      <div class="card-title" data-t="planets">Planet Explorer</div>
+      <p class="card-desc" data-t="d3">Find the planets in our solar system!</p>
+      <span class="card-badge" data-t="play">Play</span>
+    </a>
+    <a class="card" href="farm-game/index.html">
+      <div class="card-icon">🐄</div>
+      <div class="card-title" data-t="farm">Farm Counting</div>
+      <p class="card-desc" data-t="d4">Count the cows, sheep and pigs on the farm!</p>
+      <span class="card-badge" data-t="play">Play</span>
+    </a>
+    <a class="card" href="dress-up-game/index.html">
+      <div class="card-icon">👗</div>
+      <div class="card-title" data-t="dress">Dress Up</div>
+      <p class="card-desc" data-t="d5">Pick outfits and dress right for the weather!</p>
+      <span class="card-badge" data-t="play">Play</span>
+    </a>
+    <a class="card" href="fruit-sums-game/index.html">
+      <div class="card-icon">🍓</div>
+      <div class="card-title" data-t="fruit">Fruit Sums</div>
+      <p class="card-desc" data-t="d6">Add up the fruit to learn your sums!</p>
+      <span class="card-badge" data-t="play">Play</span>
     </a>
   </div>
 
-  <div class="footer">Made with ♥ for awesome kids</div>
+  <div class="footer" data-t="footer">Made with ♥ for awesome kids</div>
 </div>
 
 <script>
+  const M = KG.M;
+  KG.fill({
+    w1: M('Game', '游戏[yóu xì|game]'),
+    w2: M('Zone', '乐园[lè yuán|zone]'),
+    subtitle: M("Pick a game and let's play", '选[xuǎn|pick] 一个[yí gè|a] 游戏[yóu xì|game]，一起[yì qǐ|together] 玩[wán|play] 吧[ba|let\'s]！'),
+    footer: M('Made with ♥ for awesome kids', '为[wèi|for] 最棒的[zuì bàng de|the most awesome] 孩子们[hái zi men|kids] 用心[yòng xīn|with love] 制作[zhì zuò|made] ♥'),
+    play: M('Play', '开始[kāi shǐ|play]'),
+    memory: M('Princess Memory Match', '公主[gōng zhǔ|princess] 记忆[jì yì|memory] 配对[pèi duì|match]'),
+    typing: M('Typing Game', '打字[dǎ zì|typing] 游戏[yóu xì|game]'),
+    continents: M('Continent Explorer', '大洲[dà zhōu|continent] 探险家[tàn xiǎn jiā|explorer]'),
+    planets: M('Planet Explorer', '行星[xíng xīng|planet] 探险家[tàn xiǎn jiā|explorer]'),
+    farm: M('Farm Counting', '农场[nóng chǎng|farm] 数数[shǔ shù|counting]'),
+    dress: M('Dress Up', '换[huàn|change] 衣服[yī fu|clothes]'),
+    fruit: M('Fruit Sums', '水果[shuǐ guǒ|fruit] 加法[jiā fǎ|addition]'),
+    d0: M('Flip cards and find matching Disney princesses!', '翻[fān|flip] 卡片[kǎ piàn|cards]，找[zhǎo|find] 一样的[yí yàng de|matching] 迪士尼[dí shì ní|Disney] 公主[gōng zhǔ|princesses]！'),
+    d1: M('Learn to type words with pictures and sounds!', '看[kàn|look at] 图片[tú piàn|pictures]，学[xué|learn] 打[dǎ|to type] 英文[yīng wén|English] 单词[dān cí|words]！'),
+    d2: M('Find the continents on the world map!', '在[zài|on] 世界[shì jiè|world] 地图[dì tú|map] 上[shang|on] 找[zhǎo|find] 大洲[dà zhōu|continents]！'),
+    d3: M('Find the planets in our solar system!', '找一找[zhǎo yi zhǎo|look for] 太阳系[tài yáng xì|solar system] 里[lǐ|in] 的[de|the] 行星[xíng xīng|planets]！'),
+    d4: M('Count the cows, sheep and pigs on the farm!', '数一数[shǔ yi shǔ|count] 农场[nóng chǎng|farm] 上的[shang de|on the] 牛[niú|cows]、羊[yáng|sheep] 和[hé|and] 猪[zhū|pigs]！'),
+    d5: M('Pick outfits and dress right for the weather!', '挑选[tiāo xuǎn|pick] 衣服[yī fu|outfits]，根据[gēn jù|according to] 天气[tiān qì|weather] 穿衣[chuān yī|get dressed]！'),
+    d6: M('Add up the fruit to learn your sums!', '把[bǎ|(take)] 水果[shuǐ guǒ|fruit] 加起来[jiā qǐ lái|add up]，学[xué|learn] 加法[jiā fǎ|addition]！'),
+  });
+
   // generate gentle floating dots
   const palette = ['#ff6b9d','#ffd93d','#6ec6ff','#4ecdc4','#c490e4','#ff9a56'];
   const container = document.getElementById('dots');

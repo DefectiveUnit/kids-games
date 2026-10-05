@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dress Up</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lilita+One&family=Quicksand:wght@500;700&display=swap');
+
+  :root { --ink: #3a3a3a; }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Quicksand', sans-serif;
+    min-height: 100vh;
+    background: #fef9f0;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 16px 32px;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  /* --- top bar --- */
+  .topbar {
+    width: 100%;
+    max-width: 1100px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .home {
+    font-family: 'Lilita One', cursive;
+    text-decoration: none;
+    color: #fff;
+    background: #c490e4;
+    padding: 8px 18px;
+    border-radius: 40px;
+    box-shadow: 0 3px 0 #9b6bbd;
+    font-size: 1.05rem;
+    white-space: nowrap;
+  }
+  .modes { display: flex; gap: 8px; }
+  .mode-btn {
+    font-family: 'Lilita One', cursive;
+    font-size: 1.05rem;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 40px;
+    background: #fff;
+    color: #999;
+    box-shadow: 0 3px 0 #e2d8c8;
+    cursor: pointer;
+  }
+  .mode-btn.active { background: #4ecdc4; color: #fff; box-shadow: 0 3px 0 #33a39b; }
+
+  .stars {
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+    min-width: 4.5em;
+    text-align: right;
+  }
+  .stars .empty { filter: grayscale(1); opacity: .25; }
+
+  /* --- prompt --- */
+  .prompt {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 80px;
+    margin-bottom: 12px;
+  }
+  .prompt-text {
+    font-family: 'Lilita One', cursive;
+    font-size: clamp(1.6rem, 4.4vw, 2.8rem);
+    text-align: center;
+    line-height: 1.1;
+  }
+  .prompt-text .small {
+    display: block;
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1rem, 2.4vw, 1.3rem);
+    color: #b0a090;
+  }
+  .pop { animation: popIn .5s cubic-bezier(.17,.67,.29,1.3) both; }
+  .speak-btn {
+    font-size: 2rem;
+    width: 64px; height: 64px;
+    flex: none;
+    border-radius: 50%;
+    border: none;
+    background: #ffd93d;
+    box-shadow: 0 4px 0 #e6b800;
+    cursor: pointer;
+  }
+  .speak-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #e6b800; }
+
+  @keyframes popIn {
+    0%   { opacity: 0; transform: scale(.5); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  /* --- studio layout --- */
+  .studio {
+    width: 100%;
+    max-width: 1100px;
+    display: grid;
+    grid-template-columns: minmax(280px, 400px) 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 760px) {
+    .studio { grid-template-columns: 1fr; }
+  }
+
+  .stage-col { display: flex; flex-direction: column; gap: 12px; }
+  .stage {
+    position: relative;
+    border-radius: 28px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 4px 0 #e2d8c8, 0 8px 24px rgba(0,0,0,.08);
+  }
+  .stage svg { display: block; width: 100%; height: auto; aspect-ratio: 340 / 560; max-height: 68vh; }
+  .doll { transform-box: fill-box; transform-origin: 50% 100%; }
+  .doll.bounce { animation: dollBounce .6s cubic-bezier(.17,.67,.29,1.3); }
+  .doll.shiver { animation: shiver .5s ease; }
+  @keyframes dollBounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    40% { transform: translateY(-30px) scale(1.03, .97); }
+  }
+  @keyframes shiver {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-6px); }
+    40% { transform: translateX(6px); }
+    60% { transform: translateX(-4px); }
+    80% { transform: translateX(4px); }
+  }
+
+  .bubble {
+    position: absolute;
+    left: 50%; top: 12px;
+    transform: translateX(-50%);
+    width: calc(100% - 32px);
+    background: #fff;
+    border-radius: 20px;
+    padding: 10px 16px;
+    font-family: 'Lilita One', cursive;
+    font-size: clamp(1rem, 2.4vw, 1.3rem);
+    text-align: center;
+    box-shadow: 0 4px 14px rgba(0,0,0,.2);
+    pointer-events: none;
+    display: none;
+  }
+  .bubble.show { display: block; animation: popIn .3s cubic-bezier(.17,.67,.29,1.3) both; }
+
+  .actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+  .action-btn {
+    font-family: 'Lilita One', cursive;
+    font-size: 1.3rem;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 40px;
+    color: #fff;
+    cursor: pointer;
+  }
+  .action-btn:active { transform: translateY(3px); }
+  .surprise { background: #ff9a56; box-shadow: 0 4px 0 #d97a3a; }
+  .ready    { background: #7bd35a; box-shadow: 0 4px 0 #57a83a; }
+  .next     { background: #6ec6ff; box-shadow: 0 4px 0 #4a9fd6; }
+  .hidden { display: none !important; }
+
+  /* --- wardrobe panel --- */
+  .panel {
+    background: #fff;
+    border-radius: 28px;
+    padding: 18px;
+    box-shadow: 0 4px 0 #e2d8c8, 0 8px 24px rgba(0,0,0,.08);
+  }
+  .tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .tab {
+    font-family: 'Lilita One', cursive;
+    font-size: 1.05rem;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 16px;
+    background: #f5efe4;
+    color: #8a7a6a;
+    cursor: pointer;
+  }
+  .tab.active { background: #ff6b9d; color: #fff; }
+  .tab.nudge { animation: nudge .8s ease-in-out 3; }
+  @keyframes nudge {
+    0%, 100% { transform: scale(1); box-shadow: none; }
+    50% { transform: scale(1.12); box-shadow: 0 0 0 4px #ffd93d; }
+  }
+
+  .items {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 10px;
+  }
+  .item {
+    border: 3px solid transparent;
+    border-radius: 18px;
+    background: #fbf7f0;
+    padding: 6px 4px 8px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 700;
+    font-size: .85rem;
+    color: #8a7a6a;
+    transition: transform .15s ease;
+  }
+  .item:active { transform: scale(.95); }
+  .item.selected { border-color: #ff6b9d; background: #fff0f5; color: #ff6b9d; }
+  .item svg { width: 80px; height: 80px; }
+
+  .row-label {
+    margin: 16px 0 8px;
+    font-weight: 700;
+    color: #b0a090;
+  }
+  .swatches { display: flex; flex-wrap: wrap; gap: 10px; }
+  .swatch {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px #e2d8c8;
+    cursor: pointer;
+    transition: transform .15s ease;
+  }
+  .swatch:active { transform: scale(.9); }
+  .swatch.selected { box-shadow: 0 0 0 4px #ff6b9d; transform: scale(1.1); }
+
+  /* --- scene animation --- */
+  .fall { animation: fallDown linear infinite; }
+  @keyframes fallDown { to { transform: translateY(620px); } }
+  .spin { animation: spin 12s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .twinkle { animation: twinkle ease-in-out infinite alternate; }
+  @keyframes twinkle { from { opacity: .2; } to { opacity: 1; } }
+
+  /* --- celebration --- */
+  .confetti {
+    position: fixed;
+    top: -20px;
+    width: 12px; height: 12px;
+    border-radius: 3px;
+    pointer-events: none;
+    z-index: 10;
+    animation: fall linear forwards;
+  }
+  @keyframes fall { to { transform: translateY(110vh) rotate(720deg); } }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(254, 249, 240, .85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+  }
+  .overlay.show { display: flex; }
+  .win-card {
+    background: #fff;
+    border-radius: 28px;
+    padding: 40px 48px;
+    text-align: center;
+    box-shadow: 0 6px 0 #ffd93d, 0 12px 40px rgba(0,0,0,.12);
+    animation: popIn .5s cubic-bezier(.17,.67,.29,1.3) both;
+  }
+  .win-card .big { font-size: 5rem; line-height: 1; }
+  .win-card h2 {
+    font-family: 'Lilita One', cursive;
+    font-size: 2.4rem;
+    margin: 12px 0 8px;
+    color: #ff6b9d;
+  }
+  .win-card p { font-weight: 700; color: #999; margin-bottom: 24px; font-size: 1.15rem; }
+  .win-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .play-again, .win-home {
+    font-family: 'Lilita One', cursive;
+    font-size: 1.4rem;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 40px;
+    color: #fff;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .play-again { background: #4ecdc4; box-shadow: 0 4px 0 #33a39b; }
+  .win-home { background: #c490e4; box-shadow: 0 4px 0 #9b6bbd; }
+
+  @media (max-width: 600px) {
+    .stars { font-size: 1rem; min-width: 0; }
+    .home, .mode-btn { font-size: .85rem; padding: 6px 10px; }
+    .speak-btn { width: 52px; height: 52px; font-size: 1.6rem; }
+    .item svg { width: 64px; height: 64px; }
+    .items { grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); }
+  }
+</style>
+<script src="../shared/kg.js"></script>
+<link rel="stylesheet" href="../shared/kg.css">
+</head>
+<body>
+
+<div class="topbar">
+  <a class="home" href="../index.html" data-t="games">← Games</a>
+  <div class="modes">
+    <button class="mode-btn active" data-mode="free" data-t="free">👗 Free Style</button>
+    <button class="mode-btn" data-mode="weather" data-t="weather">🌦️ Weather</button>
+  </div>
+  <div class="stars" id="stars"></div>
+</div>
+
+<div class="prompt">
+  <div class="prompt-text" id="promptText"></div>
+  <button class="speak-btn" id="speakBtn" title="Say it again">🔊</button>
+</div>
+
+<div class="studio">
+  <div class="stage-col">
+    <div class="stage">
+      <svg id="stage" viewBox="-20 -80 340 560" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="skySun" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#6ec6ff"/><stop offset="1" stop-color="#d8f1ff"/>
+          </linearGradient>
+          <linearGradient id="skyRain" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#7f93a8"/><stop offset="1" stop-color="#c3d0dc"/>
+          </linearGradient>
+          <linearGradient id="skySnow" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#b9d9f5"/><stop offset="1" stop-color="#eef7ff"/>
+          </linearGradient>
+          <linearGradient id="skyNight" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#1c2050"/><stop offset="1" stop-color="#3d3f86"/>
+          </linearGradient>
+        </defs>
+        <g id="scene"></g>
+        <g id="doll" class="doll"></g>
+      </svg>
+      <div class="bubble" id="bubble"></div>
+    </div>
+    <div class="actions">
+      <button class="action-btn surprise" id="surpriseBtn" data-t="surprise">🎲 Surprise me!</button>
+      <button class="action-btn ready hidden" id="readyBtn" data-t="ready">✅ Ready!</button>
+      <button class="action-btn next hidden" id="nextBtn">Next weather ➡</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="tabs" id="tabs"></div>
+    <div class="items" id="items"></div>
+    <div id="colorRows"></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="win-card">
+    <div class="big">🌦️🏆</div>
+    <h2 data-t="expert">Weather expert!</h2>
+    <p data-t="dressedRight">You dressed right for every kind of weather!</p>
+    <div class="win-buttons">
+      <button class="play-again" id="playAgain" data-t="playAgain">Play again</button>
+      <a class="win-home" href="../index.html" data-t="games">← Games</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const { M, t: T } = KG;
+const TXT = {
+  ...KG.common,
+  free: M('👗 Free Style', '👗 自由[zì yóu|free] 搭配[dā pèi|style]'),
+  weather: M('🌦️ Weather', '🌦️ 天气[tiān qì|weather]'),
+  surprise: M('🎲 Surprise me!', '🎲 惊喜[jīng xǐ|surprise] 搭配[dā pèi|outfit]！'),
+  ready: M('✅ Ready!', '✅ 准备好了[zhǔn bèi hǎo le|ready]！'),
+  next: M('Next weather ➡', '下一个[xià yí gè|next] 天气[tiān qì|weather] ➡'),
+  finish: M('Finish 🏆', '完成[wán chéng|finish] 🏆'),
+  expert: M('Weather expert!', '天气[tiān qì|weather] 小专家[xiǎo zhuān jiā|little expert]！'),
+  dressedRight: M('You dressed right for every kind of weather!', '每种[měi zhǒng|every kind of] 天气[tiān qì|weather] 你[nǐ|you] 都[dōu|all] 穿[chuān|dressed] 对了[duì le|right]！'),
+  winSay: M('You dressed right for every kind of weather! You are a weather expert!', '每种[měi zhǒng|every kind of] 天气[tiān qì|weather] 你[nǐ|you] 都[dōu|all] 穿[chuān|dressed] 对了[duì le|right]！你[nǐ|you] 是[shì|are] 天气[tiān qì|weather] 小专家[xiǎo zhuān jiā|little expert]！'),
+  freeSmall: M('Dress up time!', '换装[huàn zhuāng|dress up] 时间[shí jiān|time]！'),
+  freeBig: M('Make a cool outfit! ✨', '搭配[dā pèi|put together] 一套[yí tào|an] 酷酷的[kù kù de|cool] 衣服[yī fu|outfit]！✨'),
+  freeSay: M('Dress up time! Make a cool outfit!', '换装[huàn zhuāng|dress up] 时间[shí jiān|time]！搭配[dā pèi|put together] 一套[yí tào|an] 酷酷的[kù kù de|cool] 衣服[yī fu|outfit]！'),
+  getDressed: M('Get dressed for…', '准备[zhǔn bèi|get ready for]…'),
+  perfect: M('Perfect!', '太[tài|so] 棒了[bàng le|great]！'),
+  taDa: M('Ta da!', '当当[dāng dāng|ta da]！'),
+  hair: M('hair', '头发[tóu fa|hair]'),
+  hairColour: M('Hair colour', '头发[tóu fa|hair] 颜色[yán sè|colour]'),
+  skin: M('Skin', '肤色[fū sè|skin colour]'),
+  colour: M('Colour', '颜色[yán sè|colour]'),
+  colourFor: name => M(`Colour for the ${name.en.toLowerCase()}`, `${name.zh} 的[de|'s] 颜色[yán sè|colour]`),
+  no: name => M(`No ${name.en.toLowerCase()}`, `不要[bú yào|no] ${name.zh}`),
+  // "blue raincoat" / 蓝色的雨衣
+  colourItem: (c, name) => M(`${c.name} ${name.en.toLowerCase()}`, `${c.zh} 的[de|(of)] ${name.zh}`),
+  tooHotTop: name => M(`It's too hot for a ${name.en.toLowerCase()}! Try something cooler.`,
+    `太[tài|too] 热[rè|hot] 了[le|!]，不能[bù néng|can't] 穿[chuān|wear] ${name.zh}！换[huàn|change to] 凉快[liáng kuai|cool] 一点的[yì diǎn de|a bit more] 吧[ba|!]。`),
+};
+KG.fill(TXT);
+
+/* ================= colours ================= */
+const COLORS = [
+  { name: 'red',    zh: '红色[hóng sè|red]', hex: '#ff5a5f' },
+  { name: 'orange', zh: '橙色[chéng sè|orange]', hex: '#ff9a56' },
+  { name: 'yellow', zh: '黄色[huáng sè|yellow]', hex: '#ffd93d' },
+  { name: 'green',  zh: '绿色[lǜ sè|green]', hex: '#6cc551' },
+  { name: 'blue',   zh: '蓝色[lán sè|blue]', hex: '#4f9df7' },
+  { name: 'purple', zh: '紫色[zǐ sè|purple]', hex: '#a678e0' },
+  { name: 'pink',   zh: '粉色[fěn sè|pink]', hex: '#ff7eb6' },
+  { name: 'white',  zh: '白色[bái sè|white]', hex: '#f4f4f4' },
+  { name: 'black',  zh: '黑色[hēi sè|black]', hex: '#444444' },
+];
+const HAIR_COLORS = [
+  { name: 'black',  zh: '黑色[hēi sè|black]', hex: '#2b2220' },
+  { name: 'brown',  zh: '棕色[zōng sè|brown]', hex: '#6b4226' },
+  { name: 'blonde', zh: '金色[jīn sè|blonde]', hex: '#f2cf75' },
+  { name: 'ginger', zh: '红棕色[hóng zōng sè|ginger]', hex: '#d2602a' },
+  { name: 'pink',   zh: '粉色[fěn sè|pink]', hex: '#ff8fc1' },
+  { name: 'blue',   zh: '蓝色[lán sè|blue]', hex: '#5aa9ff' },
+];
+const SKINS = ['#ffdbc4', '#f1c27d', '#d9a066', '#a86b3c', '#6b4226'];
+
+function mix(hex, target, amt) {
+  const a = parseInt(hex.slice(1), 16), b = parseInt(target.slice(1), 16);
+  const ch = s => Math.round(((a >> s) & 255) * (1 - amt) + ((b >> s) & 255) * amt);
+  return '#' + ((ch(16) << 16) | (ch(8) << 8) | ch(0)).toString(16).padStart(6, '0');
+}
+const dark  = (hex, amt = .22) => mix(hex, '#000000', amt);
+const light = (hex, amt = .45) => mix(hex, '#ffffff', amt);
+
+/* ================= wardrobe =================
+   Doll space: viewBox -20 -80 340 560. Head centre (150,115) r62, torso x110-190 y185-300,
+   arms hang from (99,196) and (201,196), legs x118-146 / x154-182 down to ~430. */
+
+const BANGS = 'M88,120 C84,48 216,48 212,120 C204,90 178,78 150,86 C122,78 96,90 88,120Z';
+const HAIR = {
+  long:     { name: M('Long hair', '长发[cháng fà|long hair]'),
+    back: h => `<path d="M82,112 C82,30 218,30 218,112 L226,252 Q150,272 74,252Z" fill="${h}"/>`,
+    front: h => `<path d="${BANGS}" fill="${h}"/>` },
+  short:    { name: M('Short hair', '短发[duǎn fà|short hair]'),
+    back: h => `<circle cx="150" cy="108" r="67" fill="${h}"/>`,
+    front: h => `<path d="${BANGS}" fill="${h}"/>` },
+  pigtails: { name: M('Pigtails', '双马尾[shuāng mǎ wěi|pigtails]'),
+    back: h => `<circle cx="150" cy="108" r="67" fill="${h}"/>
+      <ellipse cx="74" cy="160" rx="20" ry="38" fill="${h}"/><ellipse cx="226" cy="160" rx="20" ry="38" fill="${h}"/>`,
+    front: h => `<path d="${BANGS}" fill="${h}"/>
+      <circle cx="86" cy="126" r="8" fill="#ff6b9d"/><circle cx="214" cy="126" r="8" fill="#ff6b9d"/>` },
+  curly:    { name: M('Curly hair', '卷发[juǎn fà|curly hair]'),
+    back: h => Array.from({ length: 13 }, (_, i) => {
+        const a = Math.PI * (0.85 + i * 0.1); // around the top and sides of the head
+        return `<circle cx="${150 + Math.cos(a) * 70}" cy="${118 + Math.sin(a) * 70}" r="26" fill="${h}"/>`;
+      }).join('') + `<circle cx="150" cy="110" r="66" fill="${h}"/>`,
+    front: h => [96, 118, 140, 162, 184, 204].map((x, i) =>
+        `<circle cx="${x}" cy="${i === 0 || i === 5 ? 92 : 72}" r="18" fill="${h}"/>`).join('') },
+  bun:      { name: M('Hair bun', '丸子头[wán zi tóu|hair bun]'),
+    back: h => `<circle cx="150" cy="40" r="28" fill="${h}"/><circle cx="150" cy="108" r="66" fill="${h}"/>`,
+    front: h => `<path d="M88,118 C86,46 214,46 212,118 C200,80 100,80 88,118Z" fill="${h}"/>` },
+};
+
+const sleeves = {
+  short: (x, c) => `<rect x="${x - 4}" y="188" width="30" height="44" rx="12" fill="${c}"/>`,
+  long:  (x, c) => `<rect x="${x - 4}" y="188" width="30" height="98" rx="12" fill="${c}"/>
+                    <rect x="${x - 4}" y="276" width="30" height="12" rx="5" fill="${dark(c)}"/>`,
+  puffy: (x, c) => `<rect x="${x - 7}" y="186" width="36" height="102" rx="16" fill="${c}"/>
+                    ${[215, 245].map(y => `<path d="M${x - 5},${y} Q${x + 11},${y + 5} ${x + 27},${y}" stroke="${dark(c)}" stroke-width="2.5" fill="none"/>`).join('')}`,
+};
+const SHIRT = c => `<path d="M106,190 Q150,178 194,190 L198,302 Q150,310 102,302Z" fill="${c}"/>
+  <path d="M134,186 Q150,202 166,186" stroke="${dark(c)}" stroke-width="3" fill="none"/>`;
+const PJ_DOTS = (pts) => pts.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4" fill="#fff" opacity=".75"/>`).join('');
+
+const TOPS = {
+  tshirt:  { name: M('T-shirt', 'T恤[T xù|T-shirt]'), body: SHIRT, sleeve: sleeves.short },
+  tank:    { name: M('Singlet', '背心[bèi xīn|singlet]'),
+    body: c => `<path d="M114,196 L124,185 L134,185 L138,200 Q150,208 162,200 L166,185 L176,185 L186,196 L194,302 Q150,310 106,302Z" fill="${c}"/>` },
+  jumper:  { name: M('Jumper', '毛衣[máo yī|jumper]'), warm: true,
+    body: c => SHIRT(c) + `<rect x="102" y="290" width="96" height="14" rx="6" fill="${dark(c)}"/>
+      <rect x="132" y="180" width="36" height="12" rx="6" fill="${dark(c)}"/>`,
+    sleeve: sleeves.long },
+  dress:   { name: M('Dress', '连衣裙[lián yī qún|dress]'), covers: true,
+    body: c => `<path d="M110,190 Q150,178 190,190 L192,262 L226,372 Q150,388 74,372 L108,262Z" fill="${c}"/>
+      <rect x="106" y="252" width="88" height="14" rx="6" fill="${dark(c)}"/>
+      <path d="M82,358 Q150,374 218,358" stroke="${light(c)}" stroke-width="5" fill="none"/>`,
+    sleeve: (x, c) => `<ellipse cx="${x + 11}" cy="204" rx="19" ry="20" fill="${c}"/>` },
+  raincoat:{ name: M('Raincoat', '雨衣[yǔ yī|raincoat]'), rain: true,
+    back: c => `<circle cx="150" cy="112" r="78" fill="${c}"/>`,
+    body: c => `<path d="M102,188 Q150,176 198,188 L208,352 Q150,362 92,352Z" fill="${c}"/>
+      <path d="M150,192 L150,354" stroke="${dark(c)}" stroke-width="3"/>
+      ${[220, 255, 290, 325].map(y => `<circle cx="160" cy="${y}" r="5" fill="${dark(c)}"/>`).join('')}`,
+    sleeve: sleeves.long },
+  puffy:   { name: M('Puffy coat', '羽绒服[yǔ róng fú|puffy coat]'), warm: true,
+    body: c => `<path d="M100,190 Q150,174 200,190 L206,345 Q150,356 94,345Z" fill="${c}"/>
+      ${[225, 262, 300].map(y => `<path d="M98,${y} Q150,${y + 10} 202,${y}" stroke="${dark(c)}" stroke-width="3" fill="none"/>`).join('')}
+      <path d="M150,190 L150,348" stroke="${dark(c)}" stroke-width="3"/>
+      <rect x="124" y="176" width="52" height="20" rx="10" fill="${light(c, .3)}"/>`,
+    sleeve: sleeves.puffy },
+  pjs:     { name: M('Pyjama top', '睡衣[shuì yī|pyjama top]'), pj: true,
+    body: c => SHIRT(c) + PJ_DOTS([[122, 215], [168, 230], [140, 260], [180, 280], [118, 290], [158, 296]]) +
+      `<path d="M128,186 L150,206 L172,186" stroke="${light(c)}" stroke-width="6" fill="none"/>`,
+    sleeve: (x, c) => sleeves.long(x, c) + PJ_DOTS([[x + 8, 215], [x + 14, 250]]) },
+};
+
+const BOTTOMS = {
+  shorts: { name: M('Shorts', '短裤[duǎn kù|shorts]'),
+    draw: c => `<path d="M110,292 L190,292 L195,348 L154,348 L150,316 L146,348 L105,348Z" fill="${c}"/>
+      <rect x="110" y="290" width="80" height="10" rx="4" fill="${dark(c)}"/>` },
+  pants:  { name: M('Long pants', '长裤[cháng kù|long pants]'), long: true,
+    draw: c => `<path d="M110,292 L190,292 L187,426 L155,426 L150,322 L145,426 L113,426Z" fill="${c}"/>
+      <rect x="110" y="290" width="80" height="10" rx="4" fill="${dark(c)}"/>` },
+  skirt:  { name: M('Skirt', '裙子[qún zi|skirt]'),
+    draw: c => `<path d="M112,292 L188,292 L212,362 Q150,374 88,362Z" fill="${c}"/>
+      <rect x="110" y="288" width="80" height="12" rx="5" fill="${dark(c)}"/>
+      ${[115, 135, 165, 185].map(x => `<path d="M${x + (x - 150) * .02},300 L${x + (x - 150) * .5},366" stroke="${dark(c, .12)}" stroke-width="2"/>`).join('')}` },
+  pjpants:{ name: M('Pyjama pants', '睡裤[shuì kù|pyjama pants]'), long: true, pj: true,
+    draw: c => `<path d="M110,292 L190,292 L188,426 L155,426 L150,322 L145,426 L112,426Z" fill="${c}"/>` +
+      PJ_DOTS([[125, 320], [172, 335], [130, 365], [176, 380], [128, 405], [170, 412]]) },
+};
+
+const FEET = [132, 168];
+const SHOES = {
+  none:      { name: M('Bare feet', '光脚[guāng jiǎo|bare feet]'), bare: true, draw: () => '' },
+  sneakers:  { name: M('Sneakers', '运动鞋[yùn dòng xié|sneakers]'),
+    draw: c => FEET.map(x => `<path d="M${x - 19},436 Q${x - 19},414 ${x},414 Q${x + 19},414 ${x + 19},436Z" fill="${c}"/>
+      <rect x="${x - 20}" y="432" width="40" height="8" rx="4" fill="#fff"/>
+      <path d="M${x - 6},420 L${x + 6},424 M${x - 6},426 L${x + 6},422" stroke="#fff" stroke-width="2"/>`).join('') },
+  gumboots:  { name: M('Gumboots', '雨靴[yǔ xuē|gumboots]'), rain: true,
+    draw: c => FEET.map(x => `<rect x="${x - 18}" y="368" width="36" height="66" rx="8" fill="${c}"/>
+      <rect x="${x - 19}" y="366" width="38" height="10" rx="4" fill="${dark(c)}"/>
+      <rect x="${x - 19}" y="430" width="38" height="9" rx="4" fill="${dark(c, .35)}"/>`).join('') },
+  snowboots: { name: M('Snow boots', '雪地靴[xuě dì xuē|snow boots]'), warm: true,
+    draw: c => FEET.map(x => `<rect x="${x - 19}" y="384" width="38" height="52" rx="10" fill="${c}"/>
+      <rect x="${x - 20}" y="431" width="40" height="9" rx="4" fill="${dark(c, .35)}"/>
+      ${[-14, -5, 5, 14].map(dx => `<circle cx="${x + dx}" cy="386" r="7" fill="#fff"/>`).join('')}`).join('') },
+  sandals:   { name: M('Sandals', '凉鞋[liáng xié|sandals]'), cool: true,
+    draw: c => FEET.map(x => `<rect x="${x - 18}" y="433" width="36" height="7" rx="3" fill="${dark(c)}"/>
+      <path d="M${x - 14},432 Q${x},416 ${x + 14},432" stroke="${c}" stroke-width="5" fill="none"/>`).join('') },
+  slippers:  { name: M('Slippers', '拖鞋[tuō xié|slippers]'), bed: true,
+    draw: c => FEET.map(x => `<ellipse cx="${x}" cy="428" rx="21" ry="13" fill="${c}"/>
+      <circle cx="${x}" cy="418" r="7" fill="#fff"/>`).join('') },
+};
+
+const HATS = {
+  none:    { name: M('No hat', '不戴[bú dài|not wearing] 帽子[mào zi|a hat]'), draw: () => '' },
+  beanie:  { name: M('Beanie', '毛线帽[máo xiàn mào|beanie]'), warm: true,
+    draw: c => `<path d="M86,104 C86,30 214,30 214,104Z" fill="${c}"/>
+      <rect x="83" y="92" width="134" height="20" rx="9" fill="${dark(c)}"/>
+      <circle cx="150" cy="40" r="15" fill="${light(c)}"/>` },
+  sunhat:  { name: M('Sun hat', '遮阳帽[zhē yáng mào|sun hat]'), sun: true,
+    draw: c => `<ellipse cx="150" cy="90" rx="108" ry="20" fill="${c}"/>
+      <path d="M98,92 C98,26 202,26 202,92Z" fill="${c}"/>
+      <rect x="98" y="74" width="104" height="14" fill="${dark(c)}"/>` },
+  cap:     { name: M('Cap', '棒球帽[bàng qiú mào|cap]'), sun: true,
+    draw: c => `<path d="M88,98 C88,28 212,28 212,98Z" fill="${c}"/>
+      <path d="M160,92 Q232,86 252,102 Q206,110 150,100Z" fill="${dark(c)}"/>
+      <circle cx="150" cy="47" r="6" fill="${dark(c)}"/>` },
+  rainhat: { name: M('Rain hat', '雨帽[yǔ mào|rain hat]'), rain: true,
+    draw: c => `<path d="M90,96 C90,30 210,30 210,96Z" fill="${c}"/>
+      <path d="M66,98 Q150,80 234,98 Q246,120 224,120 Q150,104 76,120 Q56,120 66,98Z" fill="${dark(c, .12)}"/>` },
+  crown:   { name: M('Crown', '皇冠[huáng guān|crown]'),
+    draw: c => `<path d="M100,74 L100,38 L118,56 L134,26 L150,54 L166,26 L182,56 L200,38 L200,74Z" fill="${c}" stroke="${dark(c)}" stroke-width="3"/>
+      <circle cx="125" cy="64" r="5" fill="#fff"/><circle cx="150" cy="64" r="5" fill="#fff"/><circle cx="175" cy="64" r="5" fill="#fff"/>` },
+};
+
+const EXTRAS = {
+  sunglasses: { name: M('Sunglasses', '太阳镜[tài yáng jìng|sunglasses]'), sun: true, thumb: '92 88 116 70',
+    draw: c => `<rect x="106" y="108" width="38" height="28" rx="11" fill="#222" stroke="${c}" stroke-width="4"/>
+      <rect x="156" y="108" width="38" height="28" rx="11" fill="#222" stroke="${c}" stroke-width="4"/>
+      <path d="M144,118 Q150,112 156,118" stroke="${c}" stroke-width="4" fill="none"/>
+      <path d="M114,114 L124,114" stroke="#fff" stroke-width="3" opacity=".6"/>` },
+  scarf:      { name: M('Scarf', '围巾[wéi jīn|scarf]'), warm: true, thumb: '95 150 110 120',
+    draw: c => `<rect x="116" y="170" width="68" height="24" rx="11" fill="${c}"/>
+      <rect x="158" y="180" width="22" height="74" rx="9" fill="${c}"/>
+      <rect x="158" y="222" width="22" height="8" fill="${light(c)}"/><rect x="158" y="238" width="22" height="8" fill="${light(c)}"/>` },
+  mittens:    { name: M('Mittens', '手套[shǒu tào|mittens]'), warm: true, thumb: '55 245 190 80',
+    hand: (x, c) => `<circle cx="${x}" cy="298" r="16" fill="${c}"/><circle cx="${x + 13}" cy="288" r="7" fill="${c}"/>
+      <rect x="${x - 15}" y="278" width="30" height="8" rx="4" fill="${light(c)}"/>` },
+  umbrella:   { name: M('Umbrella', '雨伞[yǔ sǎn|umbrella]'), rain: true, thumb: '80 -80 260 260',
+    handle: () => `<path d="M218,298 L218,-12" stroke="#666" stroke-width="5"/>`,
+    draw: c => `<path d="M118,-10 Q118,-72 218,-72 Q318,-72 318,-10 Q293,-24 268,-10 Q243,-24 218,-10 Q193,-24 168,-10 Q143,-24 118,-10Z" fill="${c}"/>
+      <path d="M218,-72 L218,-10 M218,-72 Q178,-60 168,-12 M218,-72 Q258,-60 268,-12" stroke="${dark(c)}" stroke-width="2.5" fill="none"/>
+      <circle cx="218" cy="-74" r="5" fill="#666"/>` },
+};
+
+/* ================= drawing the doll ================= */
+function arm(side, o) {
+  const left = side === 'L';
+  const x = left ? 88 : 190, px = left ? 99 : 201;
+  const skin = SKINS[o.skin];
+  const top = TOPS[o.top.id];
+  const mitten = o.extras.mittens ? EXTRAS.mittens.hand(px, o.extras.mittens) : '';
+  return `<g transform="rotate(${left ? 10 : -10} ${px} 196)">
+    <rect x="${x}" y="192" width="22" height="100" rx="11" fill="${skin}"/>
+    <circle cx="${px}" cy="296" r="13" fill="${skin}"/>
+    ${top.sleeve ? top.sleeve(x, o.top.color) : ''}${mitten}</g>`;
+}
+
+function dollSVG(o) {
+  const skin = SKINS[o.skin];
+  const hair = HAIR[o.hair.style], hc = o.hair.color;
+  const top = TOPS[o.top.id];
+  const ex = o.extras;
+  return [
+    hair.back(hc),
+    top.back ? top.back(o.top.color) : '',
+    // legs and bare feet
+    `<rect x="118" y="290" width="28" height="140" rx="12" fill="${skin}"/>
+     <rect x="154" y="290" width="28" height="140" rx="12" fill="${skin}"/>
+     ${FEET.map(x => `<ellipse cx="${x}" cy="430" rx="17" ry="10" fill="${skin}"/>`).join('')}`,
+    `<rect x="140" y="165" width="20" height="30" fill="${dark(skin, .08)}"/>
+     <rect x="110" y="185" width="80" height="118" rx="22" fill="${skin}"/>`,
+    top.covers ? '' : BOTTOMS[o.bottom.id].draw(o.bottom.color),
+    SHOES[o.shoes.id].draw(o.shoes.color),
+    ex.umbrella ? EXTRAS.umbrella.handle() : '',
+    top.body(o.top.color),
+    ex.scarf ? EXTRAS.scarf.draw(ex.scarf) : '',
+    arm('L', o), arm('R', o),
+    ex.umbrella ? EXTRAS.umbrella.draw(ex.umbrella) : '',
+    // head and face
+    `<circle cx="88" cy="122" r="11" fill="${skin}"/><circle cx="212" cy="122" r="11" fill="${skin}"/>
+     <circle cx="150" cy="115" r="62" fill="${skin}"/>
+     <circle cx="116" cy="142" r="10" fill="#ff7e9d" opacity=".35"/><circle cx="184" cy="142" r="10" fill="#ff7e9d" opacity=".35"/>
+     <ellipse cx="128" cy="122" rx="7" ry="9" fill="#2b2b3a"/><ellipse cx="172" cy="122" rx="7" ry="9" fill="#2b2b3a"/>
+     <circle cx="130" cy="118" r="2.5" fill="#fff"/><circle cx="174" cy="118" r="2.5" fill="#fff"/>
+     <path d="M136,148 Q150,162 164,148" stroke="#2b2b3a" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+    hair.front(hc),
+    HATS[o.hat.id].draw(o.hat.color),
+    ex.sunglasses ? EXTRAS.sunglasses.draw(ex.sunglasses) : '',
+  ].join('');
+}
+
+/* ================= scenes ================= */
+const rnd = (a, b) => a + Math.random() * (b - a);
+function fallers(n, make, minDur, maxDur) {
+  return Array.from({ length: n }, () =>
+    `<g class="fall" style="animation-duration:${rnd(minDur, maxDur).toFixed(2)}s;animation-delay:-${rnd(0, maxDur).toFixed(2)}s">${make(rnd(-20, 320), rnd(-140, -90))}</g>`).join('');
+}
+const BG = `x="-20" y="-80" width="340" height="560"`;
+
+const SCENES = {
+  free: () => `<rect ${BG} fill="#ffe9f3"/>
+    ${Array.from({ length: 24 }, (_, i) => `<circle cx="${(i % 6) * 64}" cy="${Math.floor(i / 6) * 120 - 50 + (i % 2) * 40}" r="10" fill="#fff" opacity=".7"/>`).join('')}
+    <ellipse cx="150" cy="445" rx="130" ry="20" fill="#ffc9df"/>`,
+  sunny: () => `<rect ${BG} fill="url(#skySun)"/>
+    <g class="spin" style="transform-origin:30px -20px">${Array.from({ length: 12 }, (_, i) =>
+      `<rect x="27" y="-80" width="6" height="22" rx="3" fill="#ffd93d" transform="rotate(${i * 30} 30 -20)"/>`).join('')}</g>
+    <circle cx="30" cy="-20" r="34" fill="#ffd93d"/>
+    <rect x="-20" y="320" width="340" height="60" fill="#4fb3e8"/>
+    <path d="M-20,330 Q10,322 40,330 T100,330 T160,330 T220,330 T280,330 T340,330" stroke="#fff" stroke-width="4" fill="none" opacity=".7"/>
+    <rect x="-20" y="372" width="340" height="110" fill="#f6e0a8"/>
+    <text x="270" y="465" font-size="28">🐚</text><text x="-6" y="470" font-size="30">🏖️</text>`,
+  rainy: () => `<rect ${BG} fill="url(#skyRain)"/>
+    <g fill="#e8edf2"><ellipse cx="40" cy="-40" rx="70" ry="30"/><ellipse cx="90" cy="-55" rx="50" ry="30"/>
+      <ellipse cx="250" cy="-30" rx="80" ry="30"/><ellipse cx="290" cy="-50" rx="45" ry="26"/></g>
+    <rect x="-20" y="390" width="340" height="92" fill="#7aa36b"/>
+    <ellipse cx="150" cy="448" rx="120" ry="18" fill="#7fa6c9"/>
+    ${fallers(60, (x, y) => `<line x1="${x}" y1="${y}" x2="${x - 4}" y2="${y + 18}" stroke="#eaf3ff" stroke-width="2.5" stroke-linecap="round" opacity=".8"/>`, .7, 1.1)}`,
+  snowy: () => `<rect ${BG} fill="url(#skySnow)"/>
+    <path d="M-20,400 Q40,370 100,395 T220,390 T340,392 L340,480 L-20,480Z" fill="#fff"/>
+    <text x="250" y="420" font-size="44">⛄</text><text x="-10" y="410" font-size="40">🌲</text>
+    ${fallers(45, (x, y) => `<circle cx="${x}" cy="${y}" r="${rnd(2.5, 5).toFixed(1)}" fill="#fff"/>`, 4, 8)}`,
+  bedtime: () => `<rect ${BG} fill="url(#skyNight)"/>
+    <circle cx="255" cy="-25" r="32" fill="#fff6c4"/><circle cx="270" cy="-35" r="28" fill="#1c2050"/>
+    ${Array.from({ length: 22 }, () => `<circle class="twinkle" cx="${rnd(-20, 320).toFixed(0)}" cy="${rnd(-80, 300).toFixed(0)}" r="${rnd(1, 2.6).toFixed(1)}" fill="#fff" style="animation-duration:${rnd(1, 3).toFixed(1)}s"/>`).join('')}
+    <rect x="-20" y="395" width="340" height="90" fill="#5a4f8f"/>
+    <ellipse cx="150" cy="445" rx="125" ry="22" fill="#8f7fd1"/>
+    <text x="250" y="460" font-size="34">🧸</text>`,
+};
+
+/* ================= weather challenge rules ================= */
+// each check returns null when happy, or [tab to nudge, hint to say]
+const WEATHER = {
+  sunny: {
+    title: M('Sunny beach day! ☀️', '晴天[qíng tiān|sunny day] 去[qù|go to] 海滩[hǎi tān|the beach]！☀️'),
+    intro: M("It's a hot sunny day at the beach! Dress for the sun.", '今天[jīn tiān|today] 去[qù|go to] 海滩[hǎi tān|the beach]，太阳[tài yáng|the sun] 很[hěn|very] 晒[shài|strong]！穿上[chuān shang|put on] 防晒的[fáng shài de|sun-safe] 衣服[yī fu|clothes] 吧[ba|!]！'),
+    done: M("You're ready for the beach!", '你[nǐ|you] 可以[kě yǐ|can] 去[qù|go to] 海滩[hǎi tān|the beach] 了[le|now]！'),
+    checks: [
+      o => HATS[o.hat.id].sun ? null : ['hats', M('The sun is strong! Put on a hat to keep the sun off your face.', '太阳[tài yáng|the sun] 很[hěn|very] 晒[shài|strong]！戴上[dài shang|put on] 帽子[mào zi|a hat]，保护[bǎo hù|protect] 你的[nǐ de|your] 脸[liǎn|face]。')],
+      o => o.extras.sunglasses ? null : ['extras', M('Sunglasses will protect your eyes from the sun!', '太阳镜[tài yáng jìng|sunglasses] 会[huì|will] 保护[bǎo hù|protect] 你的[nǐ de|your] 眼睛[yǎn jing|eyes]！')],
+      o => TOPS[o.top.id].warm || TOPS[o.top.id].rain || TOPS[o.top.id].pj ? ['tops', TXT.tooHotTop(TOPS[o.top.id].name)] : null,
+      o => !TOPS[o.top.id].covers && BOTTOMS[o.bottom.id].long ? ['bottoms', M('Long pants are too hot for the beach! Try shorts or a skirt.', '长裤[cháng kù|long pants] 太[tài|too] 热[rè|hot] 了[le|!]！试试[shì shi|try] 短裤[duǎn kù|shorts] 或[huò|or] 裙子[qún zi|a skirt]。')] : null,
+      o => SHOES[o.shoes.id].cool || SHOES[o.shoes.id].bare ? null : ['shoes', M('Those shoes are too hot for the sand! Try sandals or bare feet.', '这双鞋[zhè shuāng xié|these shoes] 在[zài|on] 沙滩上[shā tān shang|the sand] 太[tài|too] 热[rè|hot] 了[le|!]！试试[shì shi|try] 凉鞋[liáng xié|sandals] 或[huò|or] 光脚[guāng jiǎo|bare feet]。')],
+      o => o.extras.scarf || o.extras.mittens || o.hat.id === 'beanie' ? ['extras', M("Phew! It's way too hot for warm winter things!", '呼[hū|phew]！太[tài|too] 热[rè|hot] 了[le|!]，不要[bú yào|don\'t] 穿[chuān|wear] 冬天的[dōng tiān de|winter] 东西[dōng xi|things]！')] : null,
+    ] },
+  rainy: {
+    title: M('Rainy day! 🌧️', '下雨天[xià yǔ tiān|rainy day]！🌧️'),
+    intro: M("It's raining! Dress up so you don't get wet.", '下雨了[xià yǔ le|it\'s raining]！穿好[chuān hǎo|put on] 衣服[yī fu|clothes]，别[bié|don\'t] 淋湿[lín shī|get wet] 了[le|!]！'),
+    done: M("You're ready for the rain!", '你[nǐ|you] 可以[kě yǐ|can] 去[qù|go] 踩水坑[cǎi shuǐ kēng|splash in puddles] 了[le|now]！'),
+    checks: [
+      o => TOPS[o.top.id].rain || o.extras.umbrella ? null : ['tops', M("Uh oh, you'll get soaked! Try a raincoat or an umbrella.", '哎呀[āi yā|uh oh]，你[nǐ|you] 会[huì|will] 淋湿[lín shī|get soaked] 的[de|!]！试试[shì shi|try] 雨衣[yǔ yī|a raincoat] 或[huò|or] 雨伞[yǔ sǎn|an umbrella]。')],
+      o => SHOES[o.shoes.id].rain ? null : ['shoes', M('Splash! Your feet will get wet. Gumboots are best for puddles!', '啪嗒[pā dā|splash]！你的[nǐ de|your] 脚[jiǎo|feet] 会[huì|will] 湿[shī|get wet] 的[de|!]。踩水坑[cǎi shuǐ kēng|for puddles] 最好[zuì hǎo|it\'s best to] 穿[chuān|wear] 雨靴[yǔ xuē|gumboots]！')],
+      o => o.extras.sunglasses ? ['extras', M("It's too dark and rainy for sunglasses!", '下雨天[xià yǔ tiān|rainy day] 太[tài|too] 暗[àn|dark] 了[le|!]，不用[bú yòng|no need for] 太阳镜[tài yáng jìng|sunglasses]！')] : null,
+    ] },
+  snowy: {
+    title: M('Snowy day! ❄️', '下雪天[xià xuě tiān|snowy day]！❄️'),
+    intro: M("It's snowing! Dress up warm.", '下雪了[xià xuě le|it\'s snowing]！穿[chuān|dress] 暖和[nuǎn huo|warm] 一点[yì diǎn|a bit]！'),
+    done: M("You're ready for the snow!", '你[nǐ|you] 可以[kě yǐ|can] 去[qù|go] 玩雪[wán xuě|play in the snow] 了[le|now]！'),
+    checks: [
+      o => TOPS[o.top.id].warm ? null : ['tops', M("Brr! It's freezing! You need a warm coat or jumper.", '好冷[hǎo lěng|so cold]！你[nǐ|you] 需要[xū yào|need] 羽绒服[yǔ róng fú|a puffy coat] 或[huò|or] 毛衣[máo yī|a jumper]！')],
+      o => o.hat.id === 'beanie' ? null : ['hats', M('Brr! Your head is cold! A beanie will keep it warm.', '好冷[hǎo lěng|so cold]！你的[nǐ de|your] 头[tóu|head] 冷[lěng|is cold]！戴[dài|wear] 毛线帽[máo xiàn mào|a beanie] 就[jiù|then] 暖和了[nuǎn huo le|it\'s warm]。')],
+      o => o.extras.scarf || o.extras.mittens ? null : ['extras', M('Brr! Add a scarf or mittens to stay cosy.', '好冷[hǎo lěng|so cold]！加上[jiā shang|add] 围巾[wéi jīn|a scarf] 或[huò|or] 手套[shǒu tào|mittens] 吧[ba|!]。')],
+      o => !TOPS[o.top.id].covers && BOTTOMS[o.bottom.id].long ? null : ['bottoms', M('Brr! Your legs are cold! Wear long pants.', '好冷[hǎo lěng|so cold]！你的[nǐ de|your] 腿[tuǐ|legs] 冷[lěng|are cold]！穿[chuān|wear] 长裤[cháng kù|long pants] 吧[ba|!]。')],
+      o => SHOES[o.shoes.id].warm || SHOES[o.shoes.id].rain ? null : ['shoes', M('Your toes are freezing! Try snow boots.', '你的[nǐ de|your] 脚趾[jiǎo zhǐ|toes] 冻坏了[dòng huài le|are freezing]！试试[shì shi|try] 雪地靴[xuě dì xuē|snow boots]。')],
+    ] },
+  bedtime: {
+    title: M('Bedtime! 🌙', '睡觉[shuì jiào|bed] 时间[shí jiān|time]！🌙'),
+    intro: M("It's bedtime! Get ready for bed.", '该[gāi|it\'s time to] 睡觉了[shuì jiào le|go to bed]！准备[zhǔn bèi|get ready] 上床[shàng chuáng|for bed] 吧[ba|!]！'),
+    done: M("You're ready for bed!", '你[nǐ|you] 可以[kě yǐ|can] 去[qù|go] 睡觉[shuì jiào|to sleep] 了[le|now]！'),
+    checks: [
+      o => TOPS[o.top.id].pj ? null : ['tops', M('Time for bed! Put on your pyjama top.', '该[gāi|time to] 睡觉了[shuì jiào le|go to bed]！穿上[chuān shang|put on] 睡衣[shuì yī|pyjama top]。')],
+      o => !TOPS[o.top.id].covers && BOTTOMS[o.bottom.id].pj ? null : ['bottoms', M("Don't forget your pyjama pants!", '别忘了[bié wàng le|don\'t forget] 睡裤[shuì kù|pyjama pants]！')],
+      o => SHOES[o.shoes.id].bed || SHOES[o.shoes.id].bare ? null : ['shoes', M('No shoes in bed! Try slippers or bare feet.', '床上[chuáng shang|in bed] 不能[bù néng|can\'t] 穿[chuān|wear] 鞋[xié|shoes]！试试[shì shi|try] 拖鞋[tuō xié|slippers] 或[huò|or] 光脚[guāng jiǎo|bare feet]。')],
+      o => o.hat.id === 'none' ? null : ['hats', M('Take your hat off for bed!', '睡觉[shuì jiào|for bed] 要[yào|need to] 摘下[zhāi xià|take off] 帽子[mào zi|hat]！')],
+      o => o.extras.sunglasses || o.extras.umbrella ? ['extras', M("You don't need that in bed, silly!", '小傻瓜[xiǎo shǎ guā|silly]，睡觉[shuì jiào|in bed] 不需要[bù xū yào|don\'t need] 这个[zhè ge|that]！')] : null,
+    ] },
+};
+
+/* ================= state ================= */
+const outfit = {
+  skin: 1,
+  hair: { style: 'long', color: HAIR_COLORS[1].hex },
+  top: { id: 'tshirt', color: COLORS[4].hex },
+  bottom: { id: 'shorts', color: COLORS[5].hex },
+  shoes: { id: 'sneakers', color: COLORS[0].hex },
+  hat: { id: 'none', color: COLORS[2].hex },
+  extras: { sunglasses: null, scarf: null, mittens: null, umbrella: null },
+};
+let extraFocus = 'sunglasses';
+const extraColor = { sunglasses: COLORS[0].hex, scarf: COLORS[0].hex, mittens: COLORS[6].hex, umbrella: COLORS[2].hex };
+
+const TABS = [
+  { id: 'me',      label: M('💇 Me', '💇 我[wǒ|me]') },
+  { id: 'tops',    label: M('👕 Tops', '👕 上衣[shàng yī|tops]'),    slot: 'top',    defs: TOPS,    crop: '60 160 180 230' },
+  { id: 'bottoms', label: M('👖 Bottoms', '👖 下装[xià zhuāng|bottoms]'), slot: 'bottom', defs: BOTTOMS, crop: '80 280 140 160' },
+  { id: 'shoes',   label: M('👟 Shoes', '👟 鞋子[xié zi|shoes]'),   slot: 'shoes',  defs: SHOES,   crop: '98 360 104 86' },
+  { id: 'hats',    label: M('🎩 Hats', '🎩 帽子[mào zi|hats]'),    slot: 'hat',    defs: HATS,    crop: '38 18 224 124' },
+  { id: 'extras',  label: M('🕶️ Extras', '🕶️ 配饰[pèi shì|accessories]') },
+];
+let tab = 'tops';
+let mode = 'free';
+let scene = 'free';
+let queue = [], doneCount = 0, sceneDone = false;
+const SCENE_ORDER = ['sunny', 'rainy', 'snowy', 'bedtime'];
+
+/* ================= sound + speech ================= */
+let audioCtx;
+function tone(freq, start, dur, type = 'sine', vol = .18) {
+  audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
+  const t0 = audioCtx.currentTime + start;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type = type;
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(vol, t0);
+  g.gain.exponentialRampToValueAtTime(.001, t0 + dur);
+  o.connect(g).connect(audioCtx.destination);
+  o.start(t0);
+  o.stop(t0 + dur);
+}
+const sounds = {
+  tap()   { tone(660, 0, .08); tone(880, .05, .1); },
+  right() { [523, 659, 784].forEach((f, i) => tone(f, i * .09, .25)); },
+  wrong() { tone(220, 0, .25, 'triangle', .15); tone(185, .12, .3, 'triangle', .15); },
+  win()   { [523, 587, 659, 784, 880, 1047].forEach((f, i) => tone(f, i * .1, .3)); },
+};
+const say = (msg, opts) => KG.say(msg, opts); // only talks when talking is switched on (or forced)
+
+/* ================= rendering ================= */
+const $ = id => document.getElementById(id);
+const colorOf = hex => COLORS.find(c => c.hex === hex) || HAIR_COLORS.find(c => c.hex === hex) || { name: '', zh: '' };
+
+function renderDoll() { $('doll').innerHTML = dollSVG(outfit); }
+function renderScene() { $('scene').innerHTML = SCENES[scene](); }
+
+function thumb(o, crop) {
+  return `<svg viewBox="${crop}" xmlns="http://www.w3.org/2000/svg">${dollSVG(o)}</svg>`;
+}
+const clone = o => ({ ...o, hair: { ...o.hair }, top: { ...o.top }, bottom: { ...o.bottom },
+  shoes: { ...o.shoes }, hat: { ...o.hat }, extras: { ...o.extras } });
+
+function renderTabs() {
+  $('tabs').innerHTML = TABS.map(t =>
+    `<button class="tab ${t.id === tab ? 'active' : ''}" data-tab="${t.id}">${T(t.label)}</button>`).join('');
+  $('tabs').querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => {
+    tab = b.dataset.tab;
+    sounds.tap();
+    renderPanel();
+  }));
+}
+
+function itemButton(selected, svg, label, onClick) {
+  const b = document.createElement('button');
+  b.className = 'item' + (selected ? ' selected' : '');
+  b.innerHTML = svg + `<span>${T(label)}</span>`;
+  b.addEventListener('click', onClick);
+  return b;
+}
+
+function swatchRow(label, list, current, onPick) {
+  const wrap = document.createElement('div');
+  wrap.innerHTML = `<div class="row-label">${T(label)}</div><div class="swatches"></div>`;
+  const row = wrap.lastChild;
+  list.forEach(c => {
+    const hex = c.hex || c;
+    const s = document.createElement('button');
+    s.className = 'swatch' + (hex === current ? ' selected' : '');
+    s.style.background = hex;
+    s.title = c.name ? KG.plain(M(c.name, c.zh)) : '';
+    s.addEventListener('click', () => onPick(c));
+    row.appendChild(s);
+  });
+  return wrap;
+}
+
+function renderPanel() {
+  renderTabs();
+  const items = $('items'), rows = $('colorRows');
+  items.innerHTML = '';
+  rows.innerHTML = '';
+  const t = TABS.find(x => x.id === tab);
+
+  if (tab === 'me') {
+    for (const [id, h] of Object.entries(HAIR)) {
+      const o = clone(outfit);
+      o.hair.style = id;
+      o.hat.id = 'none';
+      items.appendChild(itemButton(outfit.hair.style === id, thumb(o, '44 0 212 212'), h.name, () => {
+        outfit.hair.style = id;
+        say(h.name);
+        changed();
+      }));
+    }
+    rows.appendChild(swatchRow(TXT.hairColour, HAIR_COLORS, outfit.hair.color, c => {
+      outfit.hair.color = c.hex;
+      say(TXT.colourItem(c, TXT.hair));
+      changed();
+    }));
+    rows.appendChild(swatchRow(TXT.skin, SKINS, SKINS[outfit.skin], c => {
+      outfit.skin = SKINS.indexOf(c);
+      sounds.tap();
+      changed();
+    }));
+    return;
+  }
+
+  if (tab === 'extras') {
+    for (const [id, e] of Object.entries(EXTRAS)) {
+      const o = clone(outfit);
+      o.extras = { sunglasses: null, scarf: null, mittens: null, umbrella: null, [id]: extraColor[id] };
+      const on = !!outfit.extras[id];
+      items.appendChild(itemButton(on, thumb(o, e.thumb), e.name, () => {
+        extraFocus = id;
+        outfit.extras[id] = on ? null : extraColor[id];
+        say(on ? TXT.no(e.name) : TXT.colourItem(colorOf(extraColor[id]), e.name));
+        changed();
+      }));
+    }
+    rows.appendChild(swatchRow(TXT.colourFor(EXTRAS[extraFocus].name), COLORS, extraColor[extraFocus], c => {
+      extraColor[extraFocus] = c.hex;
+      outfit.extras[extraFocus] = c.hex; // picking a colour also puts it on
+      say(TXT.colourItem(c, EXTRAS[extraFocus].name));
+      changed();
+    }));
+    return;
+  }
+
+  const slot = outfit[t.slot];
+  for (const [id, def] of Object.entries(t.defs)) {
+    const o = clone(outfit);
+    o[t.slot].id = id;
+    if (t.slot === 'bottom' && TOPS[o.top.id].covers) o.top.id = 'tshirt'; // so the thumbnail shows the bottoms
+    items.appendChild(itemButton(slot.id === id, thumb(o, t.crop), def.name, () => {
+      slot.id = id;
+      const plain = id === 'none';
+      say(plain ? def.name : TXT.colourItem(colorOf(slot.color), def.name));
+      if (t.slot === 'bottom' && TOPS[outfit.top.id].covers) outfit.top.id = 'tshirt'; // can't wear bottoms under a dress view
+      changed();
+    }));
+  }
+  if (!(t.slot === 'shoes' && slot.id === 'none') && !(t.slot === 'hat' && slot.id === 'none')) {
+    rows.appendChild(swatchRow(TXT.colour, COLORS, slot.color, c => {
+      slot.color = c.hex;
+      say(TXT.colourItem(c, t.defs[slot.id].name));
+      changed();
+    }));
+  }
+}
+
+function changed() {
+  sounds.tap();
+  hideBubble();
+  renderDoll();
+  renderPanel();
+}
+
+/* ================= feedback ================= */
+let bubbleTimer;
+function showBubble(text, ms = 3500) {
+  const b = $('bubble');
+  b.innerHTML = T(text);
+  b.classList.remove('show');
+  void b.offsetWidth;
+  b.classList.add('show');
+  clearTimeout(bubbleTimer);
+  bubbleTimer = setTimeout(hideBubble, ms);
+}
+function hideBubble() { $('bubble').classList.remove('show'); }
+
+function dollAnim(cls) {
+  const d = $('doll');
+  d.classList.remove('bounce', 'shiver');
+  void d.getBoundingClientRect();
+  d.classList.add(cls);
+}
+
+function confetti(n) {
+  const colors = COLORS.map(c => c.hex);
+  for (let i = 0; i < n; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.background = colors[i % colors.length];
+    c.style.animationDuration = 1.6 + Math.random() * 1.6 + 's';
+    c.style.animationDelay = Math.random() * .4 + 's';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 4000);
+  }
+}
+
+/* ================= modes ================= */
+function renderStars() {
+  if (mode !== 'weather') { $('stars').innerHTML = ''; return; }
+  $('stars').innerHTML = SCENE_ORDER.map((_, i) =>
+    `<span class="${i < doneCount ? '' : 'empty'}">⭐</span>`).join('');
+}
+
+function setPrompt(small, big) {
+  $('promptText').innerHTML = `<span class="small">${T(small)}</span><span class="pop" style="display:inline-block">${T(big)}</span>`;
+}
+
+function startWeather() {
+  queue = [...SCENE_ORDER].sort(() => Math.random() - .5);
+  doneCount = 0;
+  renderStars();
+  nextWeather();
+}
+
+function nextWeather() {
+  scene = queue.shift();
+  if (!scene) return weatherWin();
+  sceneDone = false;
+  $('readyBtn').classList.remove('hidden');
+  $('nextBtn').classList.add('hidden');
+  renderScene();
+  const w = WEATHER[scene];
+  setPrompt(TXT.getDressed, w.title);
+  say(w.intro);
+}
+
+function checkOutfit() {
+  if (sceneDone) return;
+  const w = WEATHER[scene];
+  const problem = w.checks.map(c => c(outfit)).find(Boolean);
+  if (problem) {
+    const [tabId, hint] = problem;
+    sounds.wrong();
+    dollAnim('shiver');
+    showBubble(hint, 5000);
+    say(hint);
+    const tb = $('tabs').querySelector(`[data-tab="${tabId}"]`);
+    tb.classList.remove('nudge');
+    void tb.offsetWidth;
+    tb.classList.add('nudge');
+    return;
+  }
+  sceneDone = true;
+  doneCount++;
+  renderStars();
+  sounds.right();
+  dollAnim('bounce');
+  confetti(30);
+  const msg = KG.join(TXT.perfect, w.done);
+  showBubble(msg, 4000);
+  say(msg);
+  $('readyBtn').classList.add('hidden');
+  $('nextBtn').classList.remove('hidden');
+  $('nextBtn').innerHTML = T(queue.length ? TXT.next : TXT.finish);
+}
+
+function weatherWin() {
+  sounds.win();
+  confetti(80);
+  $('overlay').classList.add('show');
+  say(TXT.winSay);
+}
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  hideBubble();
+  if (m === 'weather') {
+    startWeather();
+  } else {
+    scene = 'free';
+    renderScene();
+    renderStars();
+    $('readyBtn').classList.add('hidden');
+    $('nextBtn').classList.add('hidden');
+    setPrompt(TXT.freeSmall, TXT.freeBig);
+    say(TXT.freeSay);
+  }
+}
+
+function surprise() {
+  const pick = obj => { const k = Object.keys(obj); return k[Math.floor(Math.random() * k.length)]; };
+  const col = () => COLORS[Math.floor(Math.random() * (COLORS.length - 2))].hex; // skip white/black for fun colours
+  outfit.top = { id: pick(TOPS), color: col() };
+  outfit.bottom = { id: pick(BOTTOMS), color: col() };
+  outfit.shoes = { id: pick(SHOES), color: col() };
+  outfit.hat = { id: Math.random() < .5 ? 'none' : pick(HATS), color: col() };
+  outfit.hair.style = pick(HAIR);
+  for (const k in outfit.extras) {
+    extraColor[k] = col();
+    outfit.extras[k] = Math.random() < .25 ? extraColor[k] : null;
+  }
+  dollAnim('bounce');
+  say(TXT.taDa);
+  changed();
+}
+
+/* ================= wiring ================= */
+document.querySelectorAll('.mode-btn').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
+$('surpriseBtn').addEventListener('click', surprise);
+$('readyBtn').addEventListener('click', checkOutfit);
+$('nextBtn').addEventListener('click', () => { hideBubble(); nextWeather(); });
+$('playAgain').addEventListener('click', () => { $('overlay').classList.remove('show'); startWeather(); });
+$('speakBtn').addEventListener('click', () => {
+  // the speaker button always talks, even when automatic talking is off
+  if (mode === 'weather' && scene !== 'free') say(WEATHER[scene].intro, { force: true });
+  else say(TXT.freeSay, { force: true });
+});
+
+renderDoll();
+renderPanel();
+setMode('free');
+</script>
+</body>
+</html>

@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Continent Explorer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lilita+One&family=Quicksand:wght@500;700&display=swap');
+
+  :root {
+    --ocean: #bfe6fb;
+    --ocean-deep: #8fd0f5;
+    --land: #f3ead8;
+    --land-edge: #d8c9a8;
+    --ink: #3a3a3a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Quicksand', sans-serif;
+    min-height: 100vh;
+    background: #fef9f0;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 16px 32px;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  /* --- top bar --- */
+  .topbar {
+    width: 100%;
+    max-width: 1100px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .home {
+    font-family: 'Lilita One', cursive;
+    text-decoration: none;
+    color: #fff;
+    background: #c490e4;
+    padding: 8px 18px;
+    border-radius: 40px;
+    box-shadow: 0 3px 0 #9b6bbd;
+    font-size: 1.05rem;
+  }
+  .modes { display: flex; gap: 8px; }
+  .mode-btn {
+    font-family: 'Lilita One', cursive;
+    font-size: 1.05rem;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 40px;
+    background: #fff;
+    color: #999;
+    box-shadow: 0 3px 0 #e2d8c8;
+    cursor: pointer;
+  }
+  .mode-btn.active { background: #4ecdc4; color: #fff; box-shadow: 0 3px 0 #33a39b; }
+
+  .stars {
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+    min-width: 7.5em;
+    text-align: right;
+  }
+  .stars .empty { filter: grayscale(1); opacity: .25; }
+
+  /* --- prompt --- */
+  .prompt {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 92px;
+    margin-bottom: 12px;
+  }
+  .prompt-text {
+    font-family: 'Lilita One', cursive;
+    font-size: clamp(1.8rem, 5vw, 3.2rem);
+    text-align: center;
+    line-height: 1.1;
+  }
+  .prompt-text .small {
+    display: block;
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1rem, 2.4vw, 1.3rem);
+    color: #b0a090;
+  }
+  .target-word { display: inline-block; padding: 0 .15em; }
+  .target-word.pop { animation: popIn .5s cubic-bezier(.17,.67,.29,1.3) both; }
+
+  .speak-btn {
+    font-size: 2rem;
+    width: 64px; height: 64px;
+    flex: none;
+    border-radius: 50%;
+    border: none;
+    background: #ffd93d;
+    box-shadow: 0 4px 0 #e6b800;
+    cursor: pointer;
+  }
+  .speak-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #e6b800; }
+
+  @keyframes popIn {
+    0%   { opacity: 0; transform: scale(.5); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  /* --- map --- */
+  .map-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 1100px;
+    border-radius: 28px;
+    overflow: hidden;
+    background: radial-gradient(ellipse at center, var(--ocean) 55%, var(--ocean-deep) 100%);
+    box-shadow: 0 4px 0 #8fd0f5, 0 8px 24px rgba(0,0,0,.08);
+  }
+  svg { display: block; width: 100%; height: auto; }
+
+  .continent {
+    fill: var(--land);
+    stroke: var(--land-edge);
+    stroke-width: 1.2;
+    stroke-linejoin: round;
+    cursor: pointer;
+    transition: fill .25s ease, transform .25s cubic-bezier(.17,.67,.29,1.3);
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  @media (hover: hover) {
+    .continent:hover { fill: #fff7e0; stroke: #c4b089; }
+  }
+  .continent.found { fill: var(--c); stroke: rgba(0,0,0,.18); }
+  .continent.found:hover { fill: var(--c); }
+  .continent.flash { fill: var(--c); }
+  .continent.wrong { animation: shake .45s ease; }
+  .continent.hint  { animation: pulse 1s ease-in-out infinite; }
+  .continent.bounce { animation: bounce .5s cubic-bezier(.17,.67,.29,1.3); }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-5px); }
+    80% { transform: translateX(5px); }
+  }
+  @keyframes pulse {
+    0%, 100% { fill: var(--land); }
+    50% { fill: var(--c); }
+  }
+  @keyframes bounce {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.08); }
+    100% { transform: scale(1); }
+  }
+
+  .label {
+    font-family: 'Lilita One', cursive;
+    font-size: 26px;
+    fill: #fff;
+    stroke: rgba(0,0,0,.45);
+    stroke-width: 5px;
+    paint-order: stroke;
+    text-anchor: middle;
+    dominant-baseline: middle;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .3s ease;
+  }
+  .label.show { opacity: 1; }
+  .label .py { font-family: 'Quicksand', sans-serif; font-size: 15px; stroke-width: 4px; }
+
+  /* --- speech bubble for wrong taps --- */
+  .bubble {
+    position: absolute;
+    transform: translate(-50%, -120%);
+    background: #fff;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-family: 'Lilita One', cursive;
+    font-size: clamp(1rem, 2.4vw, 1.5rem);
+    box-shadow: 0 4px 14px rgba(0,0,0,.15);
+    pointer-events: none;
+    white-space: nowrap;
+    animation: popIn .3s cubic-bezier(.17,.67,.29,1.3) both;
+  }
+  .bubble::after {
+    content: '';
+    position: absolute;
+    left: 50%; bottom: -10px;
+    transform: translateX(-50%);
+    border: 10px solid transparent;
+    border-bottom: none;
+    border-top-color: #fff;
+  }
+
+  /* --- celebration --- */
+  .confetti {
+    position: fixed;
+    top: -20px;
+    width: 12px; height: 12px;
+    border-radius: 3px;
+    pointer-events: none;
+    z-index: 10;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(720deg); }
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(254, 249, 240, .85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+  }
+  .overlay.show { display: flex; }
+  .win-card {
+    background: #fff;
+    border-radius: 28px;
+    padding: 40px 48px;
+    text-align: center;
+    box-shadow: 0 6px 0 #ffd93d, 0 12px 40px rgba(0,0,0,.12);
+    animation: popIn .5s cubic-bezier(.17,.67,.29,1.3) both;
+  }
+  .win-card .big { font-size: 5rem; line-height: 1; }
+  .win-card h2 {
+    font-family: 'Lilita One', cursive;
+    font-size: 2.4rem;
+    margin: 12px 0 8px;
+    color: #ff6b9d;
+  }
+  .win-card p { font-weight: 700; color: #999; margin-bottom: 24px; font-size: 1.15rem; }
+  .win-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .play-again, .win-home {
+    font-family: 'Lilita One', cursive;
+    font-size: 1.4rem;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 40px;
+    color: #fff;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .play-again { background: #4ecdc4; box-shadow: 0 4px 0 #33a39b; }
+  .win-home { background: #c490e4; box-shadow: 0 4px 0 #9b6bbd; }
+
+  @media (max-width: 600px) {
+    .stars { font-size: 1.1rem; min-width: 0; }
+    .home, .mode-btn { font-size: .9rem; padding: 6px 12px; }
+    .speak-btn { width: 52px; height: 52px; font-size: 1.6rem; }
+  }
+</style>
+<script src="../shared/kg.js"></script>
+<link rel="stylesheet" href="../shared/kg.css">
+</head>
+<body>
+
+<div class="topbar">
+  <a class="home" href="../index.html" data-t="games">← Games</a>
+  <div class="modes">
+    <button class="mode-btn active" data-mode="play" data-t="play">🎯 Play</button>
+    <button class="mode-btn" data-mode="learn" data-t="learn">📖 Learn</button>
+  </div>
+  <div class="stars" id="stars"></div>
+</div>
+
+<div class="prompt">
+  <div class="prompt-text" id="promptText"></div>
+  <button class="speak-btn" id="speakBtn" title="Say it again">🔊</button>
+</div>
+
+<div class="map-wrap" id="mapWrap">
+  <svg id="map" xmlns="http://www.w3.org/2000/svg"></svg>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="win-card">
+    <div class="big">🌍🏆</div>
+    <h2 data-t="foundAll">You found them all!</h2>
+    <p id="winMsg"></p>
+    <div class="win-buttons">
+      <button class="play-again" id="playAgain" data-t="playAgain">Play again</button>
+      <a class="win-home" href="../index.html" data-t="games">← Games</a>
+    </div>
+  </div>
+</div>
+
+<script src="continents.js"></script>
+<script>
+const { M, t: T } = KG;
+const TXT = {
+  ...KG.common,
+  foundAll: M('You found them all!', '你[nǐ|you] 全部[quán bù|all] 找到了[zhǎo dào le|found]！'),
+  find: name => M(`Can you find ${name.en}?`, `你[nǐ|you] 能[néng|can] 找到[zhǎo dào|find] ${name.zh} 吗[ma|(question)]？`),
+  praiseThats: (p, name) => M(`${p.en} That's ${name.en}!`, `${p.zh} 这是[zhè shì|this is] ${name.zh}！`),
+  wrong: name => M(`That's ${name.en}. Try again!`, `这是[zhè shì|this is] ${name.zh}。再[zài|again] 试[shì|try] 一次[yí cì|one time]！`),
+  perfect: M('All 7 continents with no mistakes! WOW!', '七个[qī gè|seven] 大洲[dà zhōu|continents]，一个[yí gè|a single] 错[cuò|mistake] 都[dōu|even] 没有[méi yǒu|none]！哇[wa|wow]！'),
+  allFound: M('All 7 continents! You are a world explorer!', '七个[qī gè|seven] 大洲[dà zhōu|continents] 全[quán|all] 找到了[zhǎo dào le|found]！你[nǐ|you] 是[shì|are] 世界[shì jiè|world] 探险家[tàn xiǎn jiā|explorer]！'),
+  explorer: M('World Explorer!', '世界[shì jiè|world] 探险家[tàn xiǎn jiā|explorer]！'),
+  winSay: M('You found all seven continents! You are a world explorer!', '你[nǐ|you] 找到了[zhǎo dào le|found] 七个[qī gè|seven] 大洲[dà zhōu|continents]！你[nǐ|you] 是[shì|are] 世界[shì jiè|world] 探险家[tàn xiǎn jiā|explorer]！'),
+  tapSmall: M('Tap a continent', '点[diǎn|tap] 一个[yí gè|a] 大洲[dà zhōu|continent]'),
+  tapBig: M('to hear its name!', '听[tīng|hear] 它的[tā de|its] 名字[míng zi|name]！'),
+  tapSay: M('Tap a continent to hear its name!', '点[diǎn|tap] 一个[yí gè|a] 大洲[dà zhōu|continent]，听[tīng|hear] 它的[tā de|its] 名字[míng zi|name]！'),
+};
+KG.fill(TXT);
+
+const CONTINENTS = [
+  { id: 'africa',        name: M('Africa',        '非洲[fēi zhōu|Africa]'),               color: '#ff9a56' },
+  { id: 'antarctica',    name: M('Antarctica',    '南极洲[nán jí zhōu|Antarctica]'),      color: '#9fb8d6' },
+  { id: 'asia',          name: M('Asia',          '亚洲[yà zhōu|Asia]'),                  color: '#ff6b9d' },
+  { id: 'australia',     name: M('Australia',     '澳洲[ào zhōu|Australia]'),             color: '#ffd93d' },
+  { id: 'europe',        name: M('Europe',        '欧洲[ōu zhōu|Europe]'),                color: '#c490e4' },
+  { id: 'north-america', name: M('North America', '北美洲[běi měi zhōu|North America]'),  color: '#4ecdc4' },
+  { id: 'south-america', name: M('South America', '南美洲[nán měi zhōu|South America]'),  color: '#7bd35a' },
+];
+const byId = Object.fromEntries(CONTINENTS.map(c => [c.id, c]));
+
+// label tweaks where the auto-placed point isn't where a kid expects the name
+const LABEL_OVERRIDES = { europe: [522, 92], antarctica: [500, 482], asia: [735, 120] };
+
+const PRAISE = KG.common.praise;
+
+/* ---- build the map ---- */
+const svg = document.getElementById('map');
+const NS = 'http://www.w3.org/2000/svg';
+const { width, height, paths, labels } = window.CONTINENT_MAP;
+svg.setAttribute('viewBox', `-15 -15 ${width + 30} ${height + 30}`);
+
+const shapes = {}, labelEls = {};
+for (const c of CONTINENTS) {
+  const p = document.createElementNS(NS, 'path');
+  p.setAttribute('d', paths[c.id]);
+  p.setAttribute('class', 'continent');
+  p.style.setProperty('--c', c.color);
+  p.dataset.id = c.id;
+  p.addEventListener('click', onTap);
+  svg.appendChild(p);
+  shapes[c.id] = p;
+}
+// labels go on top of every shape
+for (const c of CONTINENTS) {
+  const [x, y] = LABEL_OVERRIDES[c.id] || labels[c.id];
+  const t = document.createElementNS(NS, 'text');
+  t.setAttribute('x', x);
+  t.setAttribute('y', y);
+  t.setAttribute('class', 'label');
+  const { text, pinyin } = KG.parts(c.name);
+  // Chinese labels get a small pinyin line above the characters
+  t.innerHTML = pinyin
+    ? `<tspan x="${x}" dy="-.75em" class="py">${pinyin}</tspan><tspan x="${x}" dy="1.15em">${text}</tspan>`
+    : text;
+  svg.appendChild(t);
+  labelEls[c.id] = t;
+}
+
+/* ---- sound + speech ---- */
+let audioCtx;
+function tone(freq, start, dur, type = 'sine', vol = .18) {
+  audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
+  const t0 = audioCtx.currentTime + start;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type = type;
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(vol, t0);
+  g.gain.exponentialRampToValueAtTime(.001, t0 + dur);
+  o.connect(g).connect(audioCtx.destination);
+  o.start(t0);
+  o.stop(t0 + dur);
+}
+const sounds = {
+  right() { [523, 659, 784].forEach((f, i) => tone(f, i * .09, .25)); },
+  wrong() { tone(220, 0, .25, 'triangle', .15); tone(185, .12, .3, 'triangle', .15); },
+  win()   { [523, 587, 659, 784, 880, 1047].forEach((f, i) => tone(f, i * .1, .3)); },
+};
+
+const say = (msg, opts) => KG.say(msg, opts); // only talks when talking is switched on (or forced)
+
+/* ---- game state ---- */
+const promptText = document.getElementById('promptText');
+const starsEl = document.getElementById('stars');
+let mode = 'play';
+let queue = [], target = null, found = new Set(), misses = 0, totalMisses = 0, busy = false;
+let round = 0; // bumped on every restart/mode change so stale timers do nothing
+
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function resetMap() {
+  for (const id in shapes) {
+    shapes[id].classList.remove('found', 'hint', 'flash', 'wrong', 'bounce');
+    labelEls[id].classList.remove('show');
+  }
+  document.querySelectorAll('.bubble').forEach(b => b.remove());
+}
+
+function renderStars() {
+  if (mode !== 'play') { starsEl.innerHTML = ''; return; }
+  starsEl.innerHTML = CONTINENTS.map((_, i) =>
+    `<span class="${i < found.size ? '' : 'empty'}">⭐</span>`).join('');
+}
+
+function startGame() {
+  round++;
+  resetMap();
+  found = new Set();
+  totalMisses = 0;
+  queue = shuffle(CONTINENTS.map(c => c.id));
+  renderStars();
+  nextTarget();
+}
+
+function nextTarget() {
+  misses = 0;
+  busy = false;
+  target = queue.shift();
+  if (!target) return win();
+  const name = byId[target].name;
+  promptText.innerHTML = `<span class="small">${T(TXT.canYouFind)}</span>` +
+    `<span class="target-word pop" style="color:${byId[target].color};text-shadow:2px 2px 0 rgba(0,0,0,.12)">${T(name)}</span>`;
+  say(TXT.find(name));
+}
+
+function onTap(e) {
+  const id = e.currentTarget.dataset.id;
+  if (mode === 'learn') return learnTap(id, e);
+  if (busy || found.has(id)) {
+    if (found.has(id)) say(byId[id].name);
+    return;
+  }
+
+  if (id === target) {
+    busy = true;
+    found.add(id);
+    const s = shapes[id];
+    s.classList.remove('hint');
+    s.classList.add('found', 'bounce');
+    labelEls[id].classList.add('show');
+    sounds.right();
+    const praise = PRAISE[Math.floor(Math.random() * PRAISE.length)];
+    promptText.innerHTML = `<span class="target-word pop" style="color:${byId[id].color};text-shadow:2px 2px 0 rgba(0,0,0,.12)">${T(praise)}</span>`;
+    say(TXT.praiseThats(praise, byId[id].name));
+    renderStars();
+    confetti(18);
+    const r = round;
+    setTimeout(() => { s.classList.remove('bounce'); if (r === round) nextTarget(); }, 2200);
+  } else {
+    misses++;
+    totalMisses++;
+    sounds.wrong();
+    const s = shapes[id];
+    s.classList.remove('wrong');
+    void s.getBoundingClientRect(); // force reflow so the shake restarts
+    s.classList.add('wrong');
+    showBubble(TXT.thatsA(byId[id].name), e);
+    say(TXT.wrong(byId[id].name));
+    if (misses >= 2) shapes[target].classList.add('hint');
+  }
+}
+
+function learnTap(id, e) {
+  const s = shapes[id];
+  for (const k in shapes) { shapes[k].classList.remove('flash'); labelEls[k].classList.remove('show'); }
+  s.classList.add('flash', 'bounce');
+  labelEls[id].classList.add('show');
+  setTimeout(() => s.classList.remove('bounce'), 500);
+  const name = byId[id].name;
+  promptText.innerHTML = `<span class="target-word pop" style="color:${byId[id].color};text-shadow:2px 2px 0 rgba(0,0,0,.12)">${T(name)}</span>`;
+  say(name);
+  sounds.right();
+}
+
+function showBubble(text, e) {
+  document.querySelectorAll('.bubble').forEach(b => b.remove());
+  const wrap = document.getElementById('mapWrap');
+  const r = wrap.getBoundingClientRect();
+  const b = document.createElement('div');
+  b.className = 'bubble';
+  b.innerHTML = T(text);
+  b.style.left = Math.min(Math.max(e.clientX - r.left, 90), r.width - 90) + 'px';
+  b.style.top = Math.max(e.clientY - r.top, 60) + 'px';
+  wrap.appendChild(b);
+  setTimeout(() => b.remove(), 1600);
+}
+
+function confetti(n) {
+  for (let i = 0; i < n; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.background = CONTINENTS[i % CONTINENTS.length].color;
+    c.style.animationDuration = 1.6 + Math.random() * 1.6 + 's';
+    c.style.animationDelay = Math.random() * .4 + 's';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 4000);
+  }
+}
+
+function win() {
+  target = null;
+  sounds.win();
+  confetti(80);
+  document.getElementById('winMsg').innerHTML = T(totalMisses === 0 ? TXT.perfect : TXT.allFound);
+  promptText.innerHTML = `<span class="target-word pop" style="color:#ff6b9d">${T(TXT.explorer)}</span>`;
+  setTimeout(() => document.getElementById('overlay').classList.add('show'), 900);
+  say(TXT.winSay);
+}
+
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  if (m === 'learn') {
+    round++;
+    resetMap();
+    busy = false;
+    target = null;
+    renderStars();
+    promptText.innerHTML = `<span class="small">${T(TXT.tapSmall)}</span>${T(TXT.tapBig)}`;
+    say(TXT.tapSay);
+  } else {
+    startGame();
+  }
+}
+
+document.querySelectorAll('.mode-btn').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
+document.getElementById('speakBtn').addEventListener('click', () => {
+  // the speaker button always talks, even when automatic talking is off
+  if (mode === 'play' && target) say(TXT.find(byId[target].name), { force: true });
+  else if (mode === 'learn') say(TXT.tapSay, { force: true });
+});
+document.getElementById('playAgain').addEventListener('click', () => {
+  document.getElementById('overlay').classList.remove('show');
+  startGame();
+});
+
+startGame();
+</script>
+</body>
+</html>

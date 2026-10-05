@@ -371,19 +371,59 @@
   }
 
   .win-screen button:hover { transform: scale(1.05); }
+
+  /* back to the Game Zone launcher */
+  .home-btn {
+    position: fixed;
+    top: 12px; left: 12px;
+    z-index: 40;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    text-decoration: none;
+    color: #fff;
+    background: #c490e4;
+    padding: 8px 16px;
+    border-radius: 40px;
+    box-shadow: 0 3px 0 #9b6bbd;
+  }
+  .home-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #9b6bbd; }
+
+  /* dark mode */
+  html[data-theme="dark"] body.turn-p1 { background: linear-gradient(135deg, #2a1830, #3a1d3f, #251a3a); }
+  html[data-theme="dark"] body.turn-p2 { background: linear-gradient(135deg, #16213a, #1b2d4f, #1d1f3d); }
+  html[data-theme="dark"] body.solo-mode { background: linear-gradient(135deg, #2a1830, #251a3a, #1d1f3d); }
+  html[data-theme="dark"] h1 { color: #e1a6f0; }
+  html[data-theme="dark"] .controls label { color: #e1bee7; }
+  html[data-theme="dark"] .controls select { background: #2f3150; color: #ece9f5; }
+  html[data-theme="dark"] .player-score.p1 { background: #4a2a5a; color: #f3d9fb; }
+  html[data-theme="dark"] .player-score.p2 { background: #1e3a5f; color: #cfe3ff; }
+  html[data-theme="dark"] .turn-indicator.p1-turn,
+  html[data-theme="dark"] .turn-indicator.solo-turn { color: #e1a6f0; }
+  html[data-theme="dark"] .turn-indicator.p2-turn { color: #90caf9; }
+  html[data-theme="dark"] .solo-stat { background: #3a2a4a; color: #f3d9fb; }
+  html[data-theme="dark"] .card:not(.matched) .card-front { background: #2f3150; }
+  html[data-theme="dark"] .card:not(.matched) .card-front .char-name { color: #f3d9fb; }
+  html[data-theme="dark"] .win-screen { background: #262842; }
+  html[data-theme="dark"] .win-screen h2 { color: #e1a6f0; }
+  html[data-theme="dark"] .win-screen p { color: #c9c0e0; }
 </style>
+<script src="../shared/kg.js"></script>
+<link rel="stylesheet" href="../shared/kg.css">
 </head>
 <body class="turn-p1">
+<a class="home-btn" href="../index.html" data-t="games">← Games</a>
 
-<h1>Disney Princess Memory Match</h1>
+
+<h1 data-t="title">Disney Princess Memory Match</h1>
 
 <div class="controls">
-  <label for="gameMode">Mode:</label>
+  <label for="gameMode" data-t="mode">Mode:</label>
   <select id="gameMode">
     <option value="solo">Solo</option>
     <option value="vs" selected>VS (2 Players)</option>
   </select>
-  <label for="pairCount">Pairs:</label>
+  <label for="pairCount" data-t="pairs">Pairs:</label>
   <select id="pairCount">
     <option value="4">4 (Easy)</option>
     <option value="6">6</option>
@@ -392,19 +432,19 @@
     <option value="12">12</option>
     <option value="16">16 (Hard)</option>
   </select>
-  <button onclick="newGame()">New Game</button>
+  <button onclick="newGame()" data-t="newGame">New Game</button>
 </div>
 
 <!-- VS mode scoreboard -->
 <div class="scoreboard" id="vsScoreboard">
   <div class="player-score p1 active" id="p1score">
     <div class="turn-arrow">&#11015;</div>
-    Player 1
+    <span data-t="p1">Player 1</span>
     <span class="score-num" id="p1num">0</span>
   </div>
   <div class="player-score p2" id="p2score">
     <div class="turn-arrow">&#11015;</div>
-    Player 2
+    <span data-t="p2">Player 2</span>
     <span class="score-num" id="p2num">0</span>
   </div>
 </div>
@@ -412,11 +452,11 @@
 <!-- Solo mode stats -->
 <div class="solo-stats" id="soloStats">
   <div class="solo-stat">
-    Matches
+    <span data-t="matches">Matches</span>
     <span class="stat-num" id="soloMatches">0</span>
   </div>
   <div class="solo-stat">
-    Turns
+    <span data-t="turns">Turns</span>
     <span class="stat-num" id="soloTurns">0</span>
   </div>
 </div>
@@ -431,11 +471,39 @@
   <div class="win-screen">
     <h2 id="winTitle">You Win!</h2>
     <p id="winMsg"></p>
-    <button onclick="newGame(); document.getElementById('overlay').classList.remove('visible');">Play Again</button>
+    <button onclick="newGame(); document.getElementById('overlay').classList.remove('visible');" data-t="playAgain">Play Again</button>
   </div>
 </div>
 
 <script>
+const { M, t: T } = KG;
+const TXT = {
+  ...KG.common,
+  title: M('Disney Princess Memory Match', '迪士尼[dí shì ní|Disney] 公主[gōng zhǔ|princess] 记忆[jì yì|memory] 配对[pèi duì|match]'),
+  mode: M('Mode:', '模式[mó shì|mode]：'),
+  pairs: M('Pairs:', '对数[duì shù|pairs]：'),
+  newGame: M('New Game', '新[xīn|new] 游戏[yóu xì|game]'),
+  p1: M('Player 1', '玩家[wán jiā|player] 1'),
+  p2: M('Player 2', '玩家[wán jiā|player] 2'),
+  matches: M('Matches', '配对[pèi duì|matches]'),
+  turns: M('Turns', '回合[huí hé|turns]'),
+  solo: M('Solo', '单人[dān rén|solo]'),
+  vs: M('VS (2 Players)', '对战[duì zhàn|versus]（两人[liǎng rén|2 players]）'),
+  easy: M('4 (Easy)', '4（简单[jiǎn dān|easy]）'),
+  hard: M('16 (Hard)', '16（困难[kùn nan|hard]）'),
+  turnOf: n => M(`Player ${n}'s turn`, `轮到[lún dào|it's the turn of] 玩家[wán jiā|player] ${n} 了[le|(now)]`),
+  findAll: M('Find all the princesses!', '找到[zhǎo dào|find] 所有的[suǒ yǒu de|all the] 公主[gōng zhǔ|princesses]！'),
+  foundAll: M('You Found Them All!', '你[nǐ|you] 全部[quán bù|all] 找到了[zhǎo dào le|found]！'),
+  soloScore: (m, t) => M(`${m} matches in ${t} turns`, `${t} 个[gè|(measure word)] 回合[huí hé|turns] 找到了[zhǎo dào le|found] ${m} 对[duì|pairs]`),
+  wins: n => M(`Player ${n} Wins!`, `玩家[wán jiā|player] ${n} 赢了[yíng le|wins]！`),
+  tie: M("It's a Tie!", '平局[píng jú|it\'s a tie]！'),
+};
+KG.fill(TXT);
+document.querySelector('#gameMode option[value="solo"]').textContent = KG.both(TXT.solo);
+document.querySelector('#gameMode option[value="vs"]').textContent = KG.both(TXT.vs);
+document.querySelector('#pairCount option[value="4"]').textContent = KG.both(TXT.easy);
+document.querySelector('#pairCount option[value="16"]').textContent = KG.both(TXT.hard);
+
 const CHARACTERS = [
   { name: 'Elsa', img: 'images/elsa.jpg' },
   { name: 'Anna', img: 'images/anna.jpg' },
@@ -456,10 +524,18 @@ const CHARACTERS = [
 ];
 
 const MATCH_PHRASES = [
-  "Amazing!", "You found {name}!", "Wonderful!",
-  "Magical!", "Sparkle sparkle!", "Princess power!",
-  "Perfect match!", "Beautiful!", "Hooray!",
-  "Fantastic!", "You did it!", "Dazzling!",
+  M('Amazing!', '太[tài|so] 厉害了[lì hai le|amazing]！'),
+  name => M(`You found ${name}!`, `你[nǐ|you] 找到了[zhǎo dào le|found] ${name}！`),
+  M('Wonderful!', '太[tài|so] 好了[hǎo le|wonderful]！'),
+  M('Magical!', '太[tài|so] 神奇了[shén qí le|magical]！'),
+  M('Sparkle sparkle!', '闪闪[shǎn shǎn|sparkle] 亮亮[liàng liàng|shiny]！'),
+  M('Princess power!', '公主[gōng zhǔ|princess] 力量[lì liang|power]！'),
+  M('Perfect match!', '完美[wán měi|perfect] 配对[pèi duì|match]！'),
+  M('Beautiful!', '真[zhēn|really] 漂亮[piào liang|beautiful]！'),
+  M('Hooray!', '好耶[hǎo yē|hooray]！'),
+  M('Fantastic!', '太[tài|so] 棒了[bàng le|fantastic]！'),
+  M('You did it!', '你[nǐ|you] 做到了[zuò dào le|did it]！'),
+  M('Dazzling!', '闪闪[shǎn shǎn|sparkling] 发光[fā guāng|shining]！'),
 ];
 
 let gameMode = 'vs';
@@ -599,7 +675,7 @@ function celebrateMatch(cardA, cardB, charName) {
   // Show match banner
   const banner = document.getElementById('matchBanner');
   const phrase = MATCH_PHRASES[Math.floor(Math.random() * MATCH_PHRASES.length)];
-  banner.textContent = phrase.replace('{name}', charName);
+  banner.innerHTML = T(typeof phrase === 'function' ? phrase(charName) : phrase);
   banner.classList.remove('show');
   void banner.offsetWidth; // reflow
   banner.classList.add('show');
@@ -627,7 +703,7 @@ function updateScoreboard() {
   if (gameMode === 'solo') {
     document.getElementById('soloMatches').textContent = matchedCount;
     document.getElementById('soloTurns').textContent = soloTurns;
-    indicator.textContent = `Find all the princesses!`;
+    indicator.innerHTML = T(TXT.findAll);
     indicator.className = 'turn-indicator solo-turn';
     return;
   }
@@ -641,11 +717,11 @@ function updateScoreboard() {
   p2.classList.toggle('active', currentPlayer === 1);
 
   if (currentPlayer === 0) {
-    indicator.textContent = "Player 1's turn";
+    indicator.innerHTML = T(TXT.turnOf(1));
     indicator.className = 'turn-indicator p1-turn';
     document.body.className = 'turn-p1';
   } else {
-    indicator.textContent = "Player 2's turn";
+    indicator.innerHTML = T(TXT.turnOf(2));
     indicator.className = 'turn-indicator p2-turn';
     document.body.className = 'turn-p2';
   }
@@ -657,16 +733,16 @@ function showWinner() {
   const msg = document.getElementById('winMsg');
 
   if (gameMode === 'solo') {
-    title.textContent = 'You Found Them All!';
-    msg.textContent = `${matchedCount} matches in ${soloTurns} turns`;
+    title.innerHTML = T(TXT.foundAll);
+    msg.innerHTML = T(TXT.soloScore(matchedCount, soloTurns));
   } else if (scores[0] > scores[1]) {
-    title.textContent = 'Player 1 Wins!';
+    title.innerHTML = T(TXT.wins(1));
     msg.textContent = `${scores[0]} - ${scores[1]}`;
   } else if (scores[1] > scores[0]) {
-    title.textContent = 'Player 2 Wins!';
+    title.innerHTML = T(TXT.wins(2));
     msg.textContent = `${scores[1]} - ${scores[0]}`;
   } else {
-    title.textContent = "It's a Tie!";
+    title.innerHTML = T(TXT.tie);
     msg.textContent = `${scores[0]} - ${scores[1]}`;
   }
 

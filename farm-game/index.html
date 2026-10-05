@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farm Counting</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lilita+One&family=Quicksand:wght@500;700&display=swap');
+
+  :root {
+    --sky-top: #8fd3ff;
+    --sky-bottom: #d8f1ff;
+    --grass: #8ed46b;
+    --grass-dark: #6cbf4a;
+    --ink: #3a3a3a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Quicksand', sans-serif;
+    min-height: 100vh;
+    background: #fef9f0;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px 16px 32px;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  /* --- top bar --- */
+  .topbar {
+    width: 100%;
+    max-width: 1100px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .home {
+    font-family: 'Lilita One', cursive;
+    text-decoration: none;
+    color: #fff;
+    background: #c490e4;
+    padding: 8px 18px;
+    border-radius: 40px;
+    box-shadow: 0 3px 0 #9b6bbd;
+    font-size: 1.05rem;
+  }
+  .levels { display: flex; gap: 8px; }
+  .level-btn {
+    font-family: 'Lilita One', cursive;
+    font-size: 1.05rem;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 40px;
+    background: #fff;
+    color: #999;
+    box-shadow: 0 3px 0 #e2d8c8;
+    cursor: pointer;
+  }
+  .level-btn.active { background: #4ecdc4; color: #fff; box-shadow: 0 3px 0 #33a39b; }
+
+  .stars {
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+    min-width: 5.5em;
+    text-align: right;
+  }
+  .stars .empty { filter: grayscale(1); opacity: .25; }
+
+  /* --- question --- */
+  .prompt {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 92px;
+    margin-bottom: 12px;
+  }
+  .prompt-text {
+    font-family: 'Lilita One', cursive;
+    font-size: clamp(1.8rem, 5vw, 3.2rem);
+    text-align: center;
+    line-height: 1.1;
+  }
+  .prompt-text .small {
+    display: block;
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1rem, 2.4vw, 1.3rem);
+    color: #b0a090;
+  }
+  .target-word { display: inline-block; padding: 0 .15em; text-shadow: 2px 2px 0 rgba(0,0,0,.12); }
+  .target-word.pop { animation: popIn .5s cubic-bezier(.17,.67,.29,1.3) both; }
+
+  .speak-btn {
+    font-size: 2rem;
+    width: 64px; height: 64px;
+    flex: none;
+    border-radius: 50%;
+    border: none;
+    background: #ffd93d;
+    box-shadow: 0 4px 0 #e6b800;
+    cursor: pointer;
+  }
+  .speak-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #e6b800; }
+
+  @keyframes popIn {
+    0%   { opacity: 0; transform: scale(.5); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  /* --- the farm field --- */
+  .field {
+    position: relative;
+    width: 100%;
+    max-width: 1100px;
+    aspect-ratio: 16 / 9;
+    border-radius: 28px;
+    overflow: hidden;
+    container-type: inline-size;
+    background:
+      linear-gradient(to bottom, var(--sky-top) 0%, var(--sky-bottom) 26%, transparent 26%),
+      radial-gradient(ellipse 60% 18% at 20% 30%, #a6df82 98%, transparent 100%),
+      radial-gradient(ellipse 55% 16% at 80% 29%, #9bd977 98%, transparent 100%),
+      repeating-linear-gradient(100deg, var(--grass) 0 40px, #94d871 40px 80px);
+    box-shadow: 0 4px 0 var(--grass-dark), 0 8px 24px rgba(0,0,0,.1);
+  }
+  .deco {
+    position: absolute;
+    pointer-events: none;
+    line-height: 1;
+    transform: translate(-50%, -100%);
+  }
+  .sun {
+    position: absolute;
+    top: 3%; left: 4%;
+    width: 9cqw; height: 9cqw;
+    border-radius: 50%;
+    background: radial-gradient(circle, #fff6b0 0%, #ffd93d 60%, #ffb43d 100%);
+    box-shadow: 0 0 40px #ffe36e;
+    pointer-events: none;
+  }
+  .cloud {
+    position: absolute;
+    font-size: 7cqw;
+    pointer-events: none;
+    animation: cloudDrift linear infinite;
+    opacity: .95;
+  }
+  @keyframes cloudDrift {
+    from { transform: translateX(-20cqw); }
+    to   { transform: translateX(120cqw); }
+  }
+  .fence {
+    position: absolute;
+    left: 0; right: 0;
+    top: 27%;
+    height: 5%;
+    pointer-events: none;
+    background:
+      linear-gradient(#fff 0 0) 0 30% / 100% 14% no-repeat,
+      linear-gradient(#fff 0 0) 0 75% / 100% 14% no-repeat,
+      repeating-linear-gradient(to right, #fff 0 1.2cqw, transparent 1.2cqw 7cqw);
+    opacity: .9;
+  }
+
+  /* --- animals --- */
+  .animal {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    cursor: pointer;
+    line-height: 1;
+  }
+  .animal .flip { display: inline-block; transition: transform .2s ease; }
+  .animal .flip.right { transform: scaleX(-1); }
+  .animal .body {
+    display: inline-block;
+    filter: drop-shadow(0 .4cqw 0 rgba(0,0,0,.12));
+  }
+  .animal.walking .body { animation: waddle .45s ease-in-out infinite alternate; }
+  @keyframes waddle {
+    from { transform: translateY(0) rotate(-4deg); }
+    to   { transform: translateY(-6%) rotate(4deg); }
+  }
+  .animal.hop .body { animation: hop .45s cubic-bezier(.17,.67,.29,1.3); }
+  @keyframes hop {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-30%) scale(1.15); }
+  }
+  .animal.glow .body { filter: drop-shadow(0 0 1cqw #fff) drop-shadow(0 0 1.6cqw #ffd93d); }
+
+  .badge {
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translate(-50%, -85%);
+    min-width: 1.7em;
+    height: 1.7em;
+    padding: 0 .3em;
+    border-radius: 1em;
+    background: #ff6b9d;
+    color: #fff;
+    font-family: 'Lilita One', cursive;
+    font-size: .42em; /* relative to the animal, so far-away animals get smaller badges */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 0 #d94a7c;
+    animation: badgeIn .35s cubic-bezier(.17,.67,.29,1.3) both;
+    pointer-events: none;
+    z-index: 1;
+  }
+  @keyframes badgeIn {
+    from { transform: translate(-50%, -85%) scale(0); }
+    to   { transform: translate(-50%, -85%) scale(1); }
+  }
+
+  /* --- answer buttons --- */
+  .numbers {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 16px;
+    max-width: 1100px;
+  }
+  .num-btn {
+    font-family: 'Lilita One', cursive;
+    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    width: clamp(56px, 8vw, 84px);
+    height: clamp(56px, 8vw, 84px);
+    border: none;
+    border-radius: 20px;
+    background: #fff;
+    color: var(--ink);
+    box-shadow: 0 5px 0 #e2d8c8, 0 6px 16px rgba(0,0,0,.06);
+    cursor: pointer;
+    transition: transform .15s ease;
+  }
+  .num-btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #e2d8c8; }
+  .num-btn.right { background: #7bd35a; color: #fff; box-shadow: 0 5px 0 #57a83a; }
+  .num-btn.wrong { background: #ff8a8a; color: #fff; box-shadow: 0 5px 0 #d65f5f; animation: shake .4s ease; }
+  .num-btn:disabled { cursor: default; }
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  .tip {
+    margin-top: 12px;
+    font-weight: 700;
+    color: #b0a090;
+    text-align: center;
+  }
+
+  /* --- celebration --- */
+  .confetti {
+    position: fixed;
+    top: -20px;
+    width: 12px; height: 12px;
+    border-radius: 3px;
+    pointer-events: none;
+    z-index: 10;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    to { transform: translateY(110vh) rotate(720deg); }
+  }
+
+  .overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(254, 249, 240, .85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+  }
+  .overlay.show { display: flex; }
+  .win-card {
+    background: #fff;
+    border-radius: 28px;
+    padding: 40px 48px;
+    text-align: center;
+    box-shadow: 0 6px 0 #ffd93d, 0 12px 40px rgba(0,0,0,.12);
+    animation: popIn .5s cubic-bezier(.17,.67,.29,1.3) both;
+  }
+  .win-card .big { font-size: 5rem; line-height: 1; }
+  .win-card h2 {
+    font-family: 'Lilita One', cursive;
+    font-size: 2.4rem;
+    margin: 12px 0 8px;
+    color: #ff6b9d;
+  }
+  .win-card p { font-weight: 700; color: #999; margin-bottom: 24px; font-size: 1.15rem; }
+  .win-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .play-again, .win-home {
+    font-family: 'Lilita One', cursive;
+    font-size: 1.4rem;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 40px;
+    color: #fff;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .play-again { background: #4ecdc4; box-shadow: 0 4px 0 #33a39b; }
+  .win-home { background: #c490e4; box-shadow: 0 4px 0 #9b6bbd; }
+
+  @media (max-width: 600px) {
+    .stars { font-size: 1rem; min-width: 0; }
+    .home, .level-btn { font-size: .85rem; padding: 6px 10px; }
+    .topbar { flex-wrap: wrap; justify-content: center; }
+    .speak-btn { width: 52px; height: 52px; font-size: 1.6rem; }
+  }
+</style>
+<script src="../shared/kg.js"></script>
+<link rel="stylesheet" href="../shared/kg.css">
+</head>
+<body>
+
+<div class="topbar">
+  <a class="home" href="../index.html" data-t="games">← Games</a>
+  <div class="levels">
+    <button class="level-btn active" data-level="easy" data-t="easy">🐣 Easy</button>
+    <button class="level-btn" data-level="medium" data-t="medium">🐄 Medium</button>
+    <button class="level-btn" data-level="hard" data-t="hard">🚜 Hard</button>
+  </div>
+  <div class="stars" id="stars"></div>
+</div>
+
+<div class="prompt">
+  <div class="prompt-text" id="promptText"></div>
+  <button class="speak-btn" id="speakBtn" title="Say it again">🔊</button>
+</div>
+
+<div class="field" id="field">
+  <div class="sun"></div>
+  <div class="fence"></div>
+</div>
+
+<div class="numbers" id="numbers"></div>
+<div class="tip" data-t="tip">Tip: tap the animals to count them!</div>
+
+<div class="overlay" id="overlay">
+  <div class="win-card">
+    <div class="big">🐄🏆</div>
+    <h2 data-t="super">Super counting!</h2>
+    <p id="winMsg"></p>
+    <div class="win-buttons">
+      <button class="play-again" id="playAgain" data-t="playAgain">Play again</button>
+      <a class="win-home" href="../index.html" data-t="games">← Games</a>
+    </div>
+  </div>
+</div>
+
+<script>
+const { M, t: T, count, howMany, MW } = KG;
+const KINDS = {
+  cow:     { emoji: '🐄', one: 'cow',     many: 'cows',     zh: '牛[niú|cow]',     mw: MW.tou, color: '#5a4a3a',
+             noise: M('Moo!', '哞哞[mōu mōu|moo]！') },
+  sheep:   { emoji: '🐑', one: 'sheep',   many: 'sheep',    zh: '羊[yáng|sheep]',  mw: MW.zhi, color: '#8a8aa0',
+             noise: M('Baa!', '咩咩[miē miē|baa]！') },
+  pig:     { emoji: '🐖', one: 'pig',     many: 'pigs',     zh: '猪[zhū|pig]',     mw: MW.tou, color: '#ff6b9d',
+             noise: M('Oink oink!', '哼哼[hēng hēng|oink oink]！') },
+  chicken: { emoji: '🐓', one: 'chicken', many: 'chickens', zh: '鸡[jī|chicken]',  mw: MW.zhi, color: '#ff9a56',
+             noise: M('Cluck cluck!', '咯咯[gē gē|cluck cluck]！') },
+};
+const DAO = { h: '道', p: 'dào', tone4: true }; // measure word for questions
+const TXT = {
+  ...KG.common,
+  easy: M('🐣 Easy', '🐣 简单[jiǎn dān|easy]'),
+  medium: M('🐄 Medium', '🐄 中等[zhōng děng|medium]'),
+  hard: M('🚜 Hard', '🚜 困难[kùn nan|hard]'),
+  tip: M('Tip: tap the animals to count them!', '提示[tí shì|tip]：点[diǎn|tap] 动物[dòng wù|animals] 来[lái|to] 数一数[shǔ yi shǔ|count]！'),
+  super: M('Super counting!', '数得[shǔ de|counted] 超[chāo|super] 棒[bàng|great]！'),
+  countSmall: M('Count the animals!', '数一数[shǔ yi shǔ|count] 动物[dòng wù|animals]！'),
+  howManyPre: k => M('How many', `有[yǒu|there are] ${howMany(k.mw)}`),
+  kindName: k => M(k.many, k.zh),
+  ask: k => M(`How many ${k.many} are there?`, `有[yǒu|there are] ${howMany(k.mw)} ${k.zh}？`),
+  thatsA: k => M(`${k.noise.en} That's a ${k.one}!`, `${k.noise.zh} 这是[zhè shì|this is] ${count(1, k.mw)} ${k.zh}！`),
+  result: (n, k) => M(`${n} ${n === 1 ? k.one : k.many}!`, `${count(n, k.mw)} ${k.zh}！`),
+  thereAre: (n, k) => M(`There are ${n} ${n === 1 ? k.one : k.many}!`, `有[yǒu|there are] ${count(n, k.mw)} ${k.zh}！`),
+  notQuite: k => M(`Not quite! Try counting the ${k.many} again.`, `不太[bú tài|not quite] 对[duì|right]！再[zài|again] 数一数[shǔ yi shǔ|count] ${k.zh} 吧[ba|(suggestion)]。`),
+  perfect: M('Every answer right first time! WOW!', '每道题[měi dào tí|every question] 第一次[dì yī cì|first time] 就[jiù|already] 答对了[dá duì le|answered right]！哇[wa|wow]！'),
+  score: (c, total) => M(`You got ${c} out of ${total}! You are a farm counting star!`,
+    `${count(total, DAO)} 题[tí|questions] 答对了[dá duì le|got right] ${count(c, DAO)}！你[nǐ|you] 是[shì|are] 农场[nóng chǎng|farm] 数数[shǔ shù|counting] 小明星[xiǎo míng xīng|little star]！`),
+  winSay: M('Super counting! You are a farm counting star!', '数得[shǔ de|counted] 超[chāo|super] 棒[bàng|great]！你[nǐ|you] 是[shì|are] 农场[nóng chǎng|farm] 数数[shǔ shù|counting] 小明星[xiǎo míng xīng|little star]！'),
+};
+KG.fill(TXT);
+
+// target = how many of the asked animal; others = how many of each other animal
+const LEVELS = {
+  easy:   { kinds: ['cow', 'sheep'],                   target: [1, 5],  others: [1, 4] },
+  medium: { kinds: ['cow', 'sheep', 'pig'],            target: [2, 7],  others: [1, 5] },
+  hard:   { kinds: ['cow', 'sheep', 'pig', 'chicken'], target: [3, 10], others: [2, 5] },
+};
+const QUESTIONS_PER_ROUND = 5;
+
+// field coordinates: x 0..100 across, y 0..56.25 down (16:9); animals stand on the grass
+const FIELD_H = 56.25;
+const GRASS_TOP = 22, GRASS_BOTTOM = 54;
+const SPEED = 4;          // field units per second
+const MIN_GAP = 7;        // animals push apart if closer than this
+
+const PRAISE = [M('Great counting!', '数得[shǔ de|counted] 真[zhēn|really] 好[hǎo|well]！'), ...KG.common.praise.slice(1, 6)];
+
+const field = document.getElementById('field');
+const promptText = document.getElementById('promptText');
+const numbersEl = document.getElementById('numbers');
+const starsEl = document.getElementById('stars');
+
+/* ---- scenery ---- */
+for (let i = 0; i < 3; i++) {
+  const c = document.createElement('div');
+  c.className = 'cloud';
+  c.textContent = '☁️';
+  c.style.top = 2 + i * 6 + '%';
+  c.style.animationDuration = 40 + i * 15 + 's';
+  c.style.animationDelay = -i * 18 + 's';
+  field.appendChild(c);
+}
+[['🌳', 12, 31, 8], ['🌳', 90, 30, 7], ['🏡', 74, 29, 8], ['🌳', 62, 30, 5]].forEach(([e, x, y, size]) => {
+  const d = document.createElement('div');
+  d.className = 'deco';
+  d.textContent = e;
+  d.style.left = x + '%';
+  d.style.top = y + '%';
+  d.style.fontSize = size + 'cqw';
+  field.appendChild(d);
+});
+for (let i = 0; i < 10; i++) {
+  const d = document.createElement('div');
+  d.className = 'deco';
+  d.textContent = i % 3 ? '🌼' : '🌷';
+  d.style.left = 3 + Math.random() * 94 + '%';
+  d.style.top = 45 + Math.random() * 53 + '%';
+  d.style.fontSize = '2cqw';
+  d.style.opacity = .8;
+  field.appendChild(d);
+}
+
+/* ---- sound + speech ---- */
+let audioCtx;
+function tone(freq, start, dur, type = 'sine', vol = .18) {
+  audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
+  const t0 = audioCtx.currentTime + start;
+  const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+  o.type = type;
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(vol, t0);
+  g.gain.exponentialRampToValueAtTime(.001, t0 + dur);
+  o.connect(g).connect(audioCtx.destination);
+  o.start(t0);
+  o.stop(t0 + dur);
+}
+const sounds = {
+  pop(n)  { tone(400 + n * 60, 0, .15); },
+  right() { [523, 659, 784].forEach((f, i) => tone(f, i * .09, .25)); },
+  wrong() { tone(220, 0, .25, 'triangle', .15); tone(185, .12, .3, 'triangle', .15); },
+  win()   { [523, 587, 659, 784, 880, 1047].forEach((f, i) => tone(f, i * .1, .3)); },
+};
+
+const say = (msg, opts) => KG.say(msg, opts); // only talks when talking is switched on (or forced)
+
+const rand = (a, b) => a + Math.random() * (b - a);
+const randInt = (a, b) => Math.floor(rand(a, b + 1));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ---- animals ---- */
+let animals = [];
+
+class Animal {
+  constructor(kind) {
+    this.kind = kind;
+    this.x = rand(6, 94);
+    this.y = rand(GRASS_TOP + 4, GRASS_BOTTOM);
+    this.pickTarget();
+    this.rest = rand(0, 2);
+    this.counted = 0;
+
+    this.el = document.createElement('div');
+    this.el.className = 'animal';
+    this.el.innerHTML = `<span class="flip"><span class="body">${KINDS[kind].emoji}</span></span>`;
+    this.flipEl = this.el.firstChild;
+    this.el.addEventListener('pointerdown', e => { e.preventDefault(); onAnimalTap(this); });
+    field.appendChild(this.el);
+  }
+
+  pickTarget() {
+    this.tx = rand(6, 94);
+    this.ty = rand(GRASS_TOP + 4, GRASS_BOTTOM);
+  }
+
+  update(dt) {
+    let walking = false;
+    if (this.counted) {
+      // counted animals stand still so they're easy to keep track of
+    } else if (this.rest > 0) {
+      this.rest -= dt;
+    } else {
+      const dx = this.tx - this.x, dy = this.ty - this.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < .5) {
+        this.rest = rand(1, 4); // stop and munch some grass
+        this.pickTarget();
+      } else {
+        const step = Math.min(dist, SPEED * dt);
+        this.x += dx / dist * step;
+        this.y += dy / dist * step;
+        if (Math.abs(dx) > .3) this.flipEl.classList.toggle('right', dx > 0);
+        walking = true;
+      }
+    }
+    this.el.classList.toggle('walking', walking);
+  }
+
+  render() {
+    // further away (higher up the field) = smaller and drawn behind
+    const depth = (this.y - GRASS_TOP) / (GRASS_BOTTOM - GRASS_TOP);
+    const size = this.kind === 'chicken' ? 4.2 : 5.5;
+    this.el.style.left = this.x + '%';
+    this.el.style.top = (this.y / FIELD_H * 100) + '%';
+    this.el.style.fontSize = size * (.75 + depth * .35) + 'cqw';
+    this.el.style.zIndex = Math.round(this.y * 10);
+  }
+
+  setBadge(n) {
+    this.el.querySelector('.badge')?.remove();
+    this.counted = n;
+    if (!n) return;
+    const b = document.createElement('div');
+    b.className = 'badge';
+    b.textContent = n;
+    this.el.appendChild(b);
+  }
+
+  hop() {
+    this.el.classList.remove('hop');
+    void this.el.offsetWidth;
+    this.el.classList.add('hop');
+  }
+}
+
+function separate() {
+  for (let i = 0; i < animals.length; i++) {
+    for (let j = i + 1; j < animals.length; j++) {
+      const a = animals[i], b = animals[j];
+      let dx = b.x - a.x, dy = (b.y - a.y) * 1.6; // vertical overlap hides animals more, so weigh it up
+      const d = Math.hypot(dx, dy) || .01;
+      if (d < MIN_GAP) {
+        const push = (MIN_GAP - d) * .05;
+        dx /= d; dy /= d;
+        if (!a.counted) { a.x -= dx * push; a.y -= dy * push / 1.6; }
+        if (!b.counted) { b.x += dx * push; b.y += dy * push / 1.6; }
+      }
+    }
+  }
+  for (const a of animals) {
+    a.x = Math.min(94, Math.max(6, a.x));
+    a.y = Math.min(GRASS_BOTTOM, Math.max(GRASS_TOP + 4, a.y));
+  }
+}
+
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min((now - last) / 1000, .1);
+  last = now;
+  for (const a of animals) a.update(dt);
+  separate();
+  for (const a of animals) a.render();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ---- game ---- */
+let level = 'easy';
+let question = null;   // { kind, answer }
+let questionNum = 0, correctCount = 0, firstTry = 0, wrongTries = 0, busy = false;
+let tapCount = 0, lastAnswer = 0;
+let round = 0; // bumped on restart so stale async steps stop
+
+const askText = q => TXT.ask(KINDS[q.kind]);
+
+function renderStars() {
+  starsEl.innerHTML = Array.from({ length: QUESTIONS_PER_ROUND }, (_, i) =>
+    `<span class="${i < correctCount ? '' : 'empty'}">⭐</span>`).join('');
+}
+
+function renderNumbers(max) {
+  numbersEl.innerHTML = '';
+  for (let n = 1; n <= max; n++) {
+    const b = document.createElement('button');
+    b.className = 'num-btn';
+    b.textContent = n;
+    b.addEventListener('click', () => onAnswer(n, b));
+    numbersEl.appendChild(b);
+  }
+}
+
+function newScene() {
+  const cfg = LEVELS[level];
+  animals.forEach(a => a.el.remove());
+  animals = [];
+
+  const kind = cfg.kinds[randInt(0, cfg.kinds.length - 1)];
+  let answer;
+  do { answer = randInt(...cfg.target); } while (answer === lastAnswer);
+  lastAnswer = answer;
+
+  for (const k of cfg.kinds) {
+    const n = k === kind ? answer : randInt(...cfg.others);
+    for (let i = 0; i < n; i++) animals.push(new Animal(k));
+  }
+  // spread them out before the first frame so nobody starts hidden behind another
+  for (let i = 0; i < 200; i++) separate();
+
+  question = { kind, answer };
+  wrongTries = 0;
+  tapCount = 0;
+  busy = false;
+  renderNumbers(cfg.target[1]);
+  const k = KINDS[kind];
+  promptText.innerHTML = `<span class="small">${T(TXT.countSmall)}</span>${T(TXT.howManyPre(k))} ` +
+    `<span class="target-word pop" style="color:${k.color}">${k.emoji} ${T(TXT.kindName(k))}</span>${KG.lang === 'zh' ? '？' : '?'}`;
+  say(askText(question));
+}
+
+function startGame() {
+  round++;
+  document.getElementById('overlay').classList.remove('show');
+  questionNum = 0;
+  correctCount = 0;
+  firstTry = 0;
+  renderStars();
+  newScene();
+}
+
+function onAnimalTap(a) {
+  if (!question || busy) return;
+  a.hop();
+  if (a.kind === question.kind) {
+    if (a.counted) { say(KG.num(a.counted)); return; }
+    tapCount++;
+    a.setBadge(tapCount);
+    sounds.pop(tapCount);
+    say(KG.num(tapCount));
+  } else {
+    say(TXT.thatsA(KINDS[a.kind]));
+  }
+}
+
+async function countAlong(r) {
+  // clear the kid's tap badges and count every matching animal left to right
+  const matches = animals.filter(a => a.kind === question.kind).sort((a, b) => a.x - b.x);
+  animals.forEach(a => a.setBadge(0));
+  matches.forEach(a => { a.counted = -1; }); // freeze them while counting (no badge yet)
+  for (let i = 0; i < matches.length; i++) {
+    if (r !== round) return;
+    matches[i].setBadge(i + 1);
+    matches[i].hop();
+    sounds.pop(i + 1);
+    say(KG.num(i + 1));
+    await sleep(750);
+  }
+}
+
+async function onAnswer(n, btn) {
+  if (busy || !question) return;
+  const r = round;
+  const k = KINDS[question.kind];
+
+  if (n === question.answer) {
+    busy = true;
+    btn.classList.add('right');
+    numbersEl.querySelectorAll('button').forEach(b => b.disabled = true);
+    sounds.right();
+    correctCount++;
+    if (wrongTries === 0) firstTry++;
+    renderStars();
+    const praise = PRAISE[randInt(0, PRAISE.length - 1)];
+    promptText.innerHTML = `<span class="target-word pop" style="color:#7bd35a">${T(praise)}</span>`;
+    confetti(18);
+    await countAlong(r);
+    if (r !== round) return;
+    promptText.innerHTML = `<span class="target-word pop" style="color:#7bd35a">${T(praise)}</span> ` +
+      `<span class="target-word pop" style="color:${k.color}">${k.emoji} ${T(TXT.result(question.answer, k))}</span>`;
+    say(KG.join(praise, TXT.result(question.answer, k)));
+    await sleep(2200);
+    if (r !== round) return;
+    nextQuestion();
+  } else {
+    wrongTries++;
+    btn.classList.add('wrong');
+    btn.disabled = true;
+    sounds.wrong();
+    if (wrongTries < 2) {
+      say(TXT.notQuite(k));
+      animals.filter(a => a.kind === question.kind).forEach(a => a.el.classList.add('glow'));
+      setTimeout(() => animals.forEach(a => a.el.classList.remove('glow')), 2500);
+    } else {
+      // second miss: count them together, then show the answer
+      busy = true;
+      numbersEl.querySelectorAll('button').forEach(b => b.disabled = true);
+      promptText.innerHTML = `<span class="small">${T(TXT.together)}</span>` +
+        `<span class="target-word pop" style="color:${k.color}">${k.emoji} ${T(TXT.kindName(k))}</span>`;
+      say(TXT.together);
+      await sleep(1500);
+      await countAlong(r);
+      if (r !== round) return;
+      numbersEl.children[question.answer - 1].classList.add('right');
+      promptText.innerHTML = `<span class="target-word pop" style="color:${k.color}">${k.emoji} ${T(TXT.thereAre(question.answer, k))}</span>`;
+      say(TXT.thereAre(question.answer, k));
+      await sleep(3000);
+      if (r !== round) return;
+      nextQuestion();
+    }
+  }
+}
+
+function nextQuestion() {
+  questionNum++;
+  if (questionNum >= QUESTIONS_PER_ROUND) return win();
+  newScene();
+}
+
+function win() {
+  question = null;
+  sounds.win();
+  confetti(80);
+  document.getElementById('winMsg').innerHTML = T(firstTry === QUESTIONS_PER_ROUND
+    ? TXT.perfect : TXT.score(correctCount, QUESTIONS_PER_ROUND));
+  setTimeout(() => document.getElementById('overlay').classList.add('show'), 900);
+  say(TXT.winSay);
+}
+
+function confetti(n) {
+  const colors = ['#ff6b9d', '#ffd93d', '#6ec6ff', '#4ecdc4', '#c490e4', '#ff9a56'];
+  for (let i = 0; i < n; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 100 + 'vw';
+    c.style.background = colors[i % colors.length];
+    c.style.animationDuration = 1.6 + Math.random() * 1.6 + 's';
+    c.style.animationDelay = Math.random() * .4 + 's';
+    document.body.appendChild(c);
+    setTimeout(() => c.remove(), 4000);
+  }
+}
+
+document.querySelectorAll('.level-btn').forEach(b => b.addEventListener('click', () => {
+  level = b.dataset.level;
+  document.querySelectorAll('.level-btn').forEach(x => x.classList.toggle('active', x === b));
+  startGame();
+}));
+// the speaker button always talks, even when automatic talking is off
+document.getElementById('speakBtn').addEventListener('click', () => { if (question) say(askText(question), { force: true }); });
+document.getElementById('playAgain').addEventListener('click', startGame);
+
+startGame();
+</script>
+</body>
+</html>

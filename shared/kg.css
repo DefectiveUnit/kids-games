@@ -1,0 +1,100 @@
+/* Shared styles: settings buttons, Chinese pinyin + hover English, and dark mode for the common game parts.
+   Loaded after each page's own <style> so these overrides win. */
+
+/* ---------- settings buttons (bottom-left on every page) ---------- */
+.kg-settings {
+  position: fixed;
+  left: 12px; bottom: 12px;
+  z-index: 60;
+  display: flex;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 40px;
+  background: rgba(255, 255, 255, .9);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .12);
+}
+.kg-settings button {
+  min-width: 40px; height: 40px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 20px;
+  background: #f5efe4;
+  font: 700 1rem 'Quicksand', 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  color: #6b5d50;
+  cursor: pointer;
+}
+.kg-settings button:active { transform: scale(.92); }
+body { padding-bottom: 72px; }
+
+/* ---------- Chinese text ---------- */
+ruby.zh-w { ruby-position: over; ruby-align: center; }
+ruby.zh-w rt {
+  font-family: 'Quicksand', 'Segoe UI', sans-serif;
+  font-weight: 700;
+  font-size: max(.48em, 10px);
+  letter-spacing: 0;
+  text-shadow: none;
+  opacity: .8;
+}
+html[data-lang="zh"] .zh-w { cursor: help; }
+html[data-lang="zh"] button .zh-w, html[data-lang="zh"] a .zh-w { cursor: inherit; }
+html[data-lang="zh"] .zh-w:hover { text-decoration: underline dotted; text-underline-offset: 4px; }
+
+.kg-tip {
+  position: fixed;
+  z-index: 100;
+  max-width: min(360px, calc(100vw - 16px));
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #3a3a3a;
+  color: #fff;
+  font: 500 .95rem/1.35 'Quicksand', 'Segoe UI', sans-serif;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .25);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .12s ease;
+}
+.kg-tip.show { opacity: 1; }
+.kg-tip-word { font-size: 1.05rem; margin-bottom: 2px; }
+.kg-tip-word b { color: #ffd93d; }
+.kg-tip-sent { opacity: .85; font-style: italic; }
+
+/* ---------- dark mode ---------- */
+html[data-theme="dark"] {
+  --ink: #ece9f5;
+  --ocean: #2a4f75;
+  --ocean-deep: #1a3554;
+  color-scheme: dark;
+}
+html[data-theme="dark"] body { background: #161729; color: #ece9f5; }
+
+html[data-theme="dark"] .kg-settings { background: rgba(38, 40, 66, .92); }
+html[data-theme="dark"] .kg-settings button { background: #34365a; color: #ece9f5; }
+html[data-theme="dark"] .kg-tip { background: #ece9f5; color: #1c1d33; }
+html[data-theme="dark"] .kg-tip-word b { color: #c2410c; }
+
+/* buttons, cards and panels */
+html[data-theme="dark"] .mode-btn:not(.active),
+html[data-theme="dark"] .level-btn:not(.active) { background: #262842; color: #a9a3c4; box-shadow: 0 3px 0 #0d0e1c; }
+html[data-theme="dark"] .num-btn:not(.right):not(.wrong) { background: #262842; color: #ece9f5; box-shadow: 0 5px 0 #0d0e1c; }
+html[data-theme="dark"] .panel,
+html[data-theme="dark"] .stage,
+html[data-theme="dark"] .win-card { background: #262842; box-shadow: 0 4px 0 #0d0e1c, 0 8px 24px rgba(0,0,0,.3); }
+html[data-theme="dark"] .games .card,
+html[data-theme="dark"] .sum .card { background: #262842; }
+html[data-theme="dark"] .card.ans.solved { background: #1f3a24; }
+html[data-theme="dark"] .card-title { color: #ece9f5; }
+html[data-theme="dark"] .card-desc { color: #a9a3c4; }
+html[data-theme="dark"] .overlay { background: rgba(22, 23, 41, .85); }
+html[data-theme="dark"] .fact { color: #b9b0d0; }
+html[data-theme="dark"] .bubble { background: #34365a; color: #ece9f5; }
+html[data-theme="dark"] .bubble::after { border-top-color: #34365a; }
+html[data-theme="dark"] .tab:not(.active) { background: #34365a; color: #c9c0e0; }
+html[data-theme="dark"] .item { background: #2f3150; color: #c9c0e0; }
+html[data-theme="dark"] .item.selected { background: #45284a; color: #ff8fb8; }
+html[data-theme="dark"] .swatch { border-color: #262842; box-shadow: 0 0 0 2px #45476e; }
+html[data-theme="dark"] .swatch.selected { box-shadow: 0 0 0 4px #ff6b9d; }
+html[data-theme="dark"] .map-wrap { box-shadow: 0 4px 0 #1a3554, 0 8px 24px rgba(0,0,0,.3); }
+html[data-theme="dark"] .field { filter: brightness(.85); }
+/* the coloured prompt words were picked for a light page */
+html[data-theme="dark"] .target-word { filter: brightness(1.4); }

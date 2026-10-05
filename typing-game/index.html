@@ -169,11 +169,41 @@
     h1 { font-size: 1.1rem; margin-top: 8px; }
     #countdown { font-size: 18px; margin-top: 10px; }
   }
+
+  /* back to the Game Zone launcher */
+  .home-btn {
+    position: fixed;
+    top: 12px; left: 12px;
+    z-index: 40;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    text-decoration: none;
+    color: #fff;
+    background: #c490e4;
+    padding: 8px 16px;
+    border-radius: 40px;
+    box-shadow: 0 3px 0 #9b6bbd;
+  }
+  .home-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #9b6bbd; }
+
+  /* dark mode */
+  html[data-theme="dark"] body { background: #161729; }
+  html[data-theme="dark"] h1 { color: #c9c0e0; }
+  html[data-theme="dark"] .letter { color: #6b6f8f; }
+  html[data-theme="dark"] .letter.active { color: #93c5fd; background: #1e3a5f; }
+  html[data-theme="dark"] .letter.done { color: #4ade80; }
+  html[data-theme="dark"] .key:not(.highlight):not(.pressed) { background: #262842; border-color: #3d4066; color: #ece9f5; }
+  html[data-theme="dark"] #countdown { color: #a9a3c4; }
 </style>
+<script src="../shared/kg.js"></script>
+<link rel="stylesheet" href="../shared/kg.css">
 </head>
 <body>
+<a class="home-btn" href="../index.html" data-t="games">← Games</a>
 
-<h1>Type the word!</h1>
+
+<h1 data-t="title">Type the word!</h1>
 <div id="picture"></div>
 <div id="word"></div>
 <div id="celebration"></div>
@@ -187,6 +217,15 @@
 </div>
 
 <script>
+const { M, t: T } = KG;
+const TXT = {
+  ...KG.common,
+  title: M('Type the word!', '打出[dǎ chū|type] 这个[zhè ge|this] 单词[dān cí|word]！'),
+  next: n => M(`Next word in ${n}...`, `${n} 秒后[miǎo hòu|seconds later] 下一个[xià yí gè|next] 单词[dān cí|word]…`),
+  greatJob: M('🎉 Great job! 🎉', '🎉 真[zhēn|really] 棒[bàng|great]！🎉'),
+};
+KG.fill(TXT);
+
 const WORDS = [
   { word: "cat",    emoji: "\u{1F431}" },
   { word: "dog",    emoji: "\u{1F436}" },
@@ -230,20 +269,13 @@ let currentWordObj = null;
 let usedIndices = [];
 
 /* ---- speech ---- */
+// the words are English, so they're always read in English — and only when talking is switched on
 function sayLetter(ch) {
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(ch.toUpperCase());
-  u.rate = 1.2;
-  u.pitch = 1.1;
-  speechSynthesis.speak(u);
+  KG.say(ch.toUpperCase(), { english: true, rate: 1.2 });
 }
 
 function sayWord(word) {
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(word);
-  u.rate = 0.9;
-  u.pitch = 1.1;
-  speechSynthesis.speak(u);
+  KG.say(word, { english: true, rate: 0.9 });
 }
 
 /* ---- keyboard rendering ---- */
@@ -329,11 +361,11 @@ let countdownInterval = null;
 function autoAdvance(seconds) {
   const el = document.getElementById("countdown");
   let remaining = seconds;
-  el.textContent = "Next word in " + remaining + "...";
+  el.innerHTML = T(TXT.next(remaining));
   countdownInterval = setInterval(() => {
     remaining--;
     if (remaining > 0) {
-      el.textContent = "Next word in " + remaining + "...";
+      el.innerHTML = T(TXT.next(remaining));
     } else {
       clearInterval(countdownInterval);
       el.textContent = "";
@@ -392,7 +424,7 @@ function handleInput(typed) {
   if (currentIndex >= word.length) {
     Object.values(keyEls).forEach(el => el.classList.remove("highlight"));
     setTimeout(() => {
-      document.getElementById("celebration").textContent = "\u{1F389} Great job! \u{1F389}";
+      document.getElementById("celebration").innerHTML = T(TXT.greatJob);
       sayWord(word);
       autoAdvance(3);
     }, 250);
